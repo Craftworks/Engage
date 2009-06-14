@@ -1,0 +1,5 @@
+API::Email:
+    sender:
+        mailer_args:
+            Host:   product.example.com
+

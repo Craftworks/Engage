@@ -1,0 +1,7 @@
+API::Email:
+    sender:
+        mailer: SMTP
+        mailer_args:
+            Host:   smtp.example.com
+            Hello:  smtp_host
+
