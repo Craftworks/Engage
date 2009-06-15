@@ -8,7 +8,7 @@ use Data::Dumper;
 BEGIN { use_ok 'Engage::Log' }
 
 {
-    package MyApp;
+    package MyApp::API::Foo;
     use Moose;
     with 'Engage::Config';
     with 'Engage::Log';
@@ -20,7 +20,7 @@ BEGIN { use_ok 'Engage::Log' }
 #=============================================================================
 # new
 #=============================================================================
-ok( my $o = MyApp->new( config_prefix => 'dod' ), 'new' );
+ok( my $o = MyApp::API::Foo->new( config_prefix => 'api' ), 'new' );
 
 #=============================================================================
 # isa
