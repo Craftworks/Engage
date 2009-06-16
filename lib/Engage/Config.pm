@@ -5,7 +5,6 @@ use MooseX::Types::Path::Class;
 use FindBin;
 use Config::Any;
 use Hash::Merge;
-use Data::Dumper;
 
 has config => (
     is  => 'rw',
@@ -67,6 +66,7 @@ sub _build_config {
         files   => $self->loaded_config,
         use_ext => 1,
     });
+    return +{} if !@$config;
 
     # merge hash
     my %config;
@@ -91,9 +91,9 @@ sub _build_config {
     %config = %{ Hash::Merge::merge( \%config, values %$_ ) } for (@$config);
     Hash::Merge::set_behavior( $behavior );
 
-    my $class = ref $self;
-    my $app = $config{'name'} || substr($class, 0, index($class, ':'));
-    (my $abbr = substr $class, length $app) =~ s/^:://o;
+    my $pkg = ref $self;
+    my $app = $config{'name'} || substr($pkg, 0, index($pkg, ':'));
+    (my $abbr = substr $pkg, length $app) =~ s/^:://o;
     my $local = $config{$abbr} || {};
 
     return { 'global' => \%config, %$local };
