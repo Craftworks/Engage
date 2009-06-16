@@ -20,7 +20,9 @@ sub BUILD {
     my $pkg = ref $self;
     my $app = $self->can('config') && exists $self->config->{'name'}
             ? $self->config->{'name'} 
-            : substr($pkg, 0, index($pkg, ':'));
+            : index($pkg, ':') != -1
+                ?  substr $pkg, 0, index($pkg, ':')
+                : $pkg;
 
     for my $class (@{ $self->class_for_loading }) {
         (my $method = lc $class) =~ s/::/_/go;

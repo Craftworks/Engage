@@ -1,0 +1,9 @@
+
+API::Foo:
+    Log::Dispatch:
+        class:      'Log::Dispatch::File::Stamped'
+        min_level:  'debug'
+        filename:   '/tmp/test.log'
+        stamp_fmt:  '%Y%m%d'
+        format:     '%d [%p] %m at %P line %L %n'
+

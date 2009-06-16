@@ -7,14 +7,14 @@ use Data::Dumper;
 
 BEGIN { use_ok 'Engage::Log' }
 
+$ENV{'CONFIG_PATH'} = "$FindBin::Bin/conf";
+$ENV{'CONFIG_LOCAL_SUFFIX'} = 'log';
+
 {
     package MyApp::API::Foo;
     use Moose;
     with 'Engage::Config';
     with 'Engage::Log';
-    has '+config_path' => (
-        default => "$FindBin::Bin/conf/"
-    );
 }
 
 #=============================================================================
