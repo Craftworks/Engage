@@ -16,7 +16,11 @@ has 'loaded_instances' => (
 
 sub BUILD {
     my $self = shift;
-    my $app  = ref $self;
+
+    my $pkg = ref $self;
+    my $app = $self->can('config') && exists $self->config->{'name'}
+            ? $self->config->{'name'} 
+            : substr($pkg, 0, index($pkg, ':'));
 
     for my $class (@{ $self->class_for_loading }) {
         (my $method = lc $class) =~ s/::/_/go;
