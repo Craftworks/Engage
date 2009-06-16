@@ -1,2 +1,8 @@
-
+DOD::DBIC:
+    schema_class:   'Engage::DOD::DBIC::Schema'
+    datasources:
+        dsn1:
+            - 'dbi:Mock:'
+            - ''
+            - ''
 

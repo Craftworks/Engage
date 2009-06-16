@@ -13,6 +13,7 @@ requires 'Hash::Merge';
 
 build_requires 'Test::More';
 build_requires 'Test::File::Contents';
+build_requires 'DBD::Mock';
 
 auto_install;
 
