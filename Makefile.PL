@@ -8,6 +8,7 @@ license  'perl';
 requires 'Moose';
 requires 'MooseX::LogDispatch';
 requires 'MooseX::Types::Path::Class';
+requires 'MooseX::App::Cmd';
 requires 'Config::Any';
 requires 'Hash::Merge';
 
