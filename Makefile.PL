@@ -11,6 +11,8 @@ requires 'MooseX::Types::Path::Class';
 requires 'MooseX::App::Cmd';
 requires 'Config::Any';
 requires 'Hash::Merge';
+requires 'FCGI';
+requires 'FCGI::ProcManager';
 
 build_requires 'Test::More';
 build_requires 'Test::File::Contents';

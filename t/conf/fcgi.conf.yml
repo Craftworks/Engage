@@ -1,0 +1,39 @@
+FCGI:
+    WUI::Service:
+        -
+            host: ^prd
+            listen: '/tmp/.s.fcgi.service'
+            nproc: 5
+            pidfile: pid
+            keep_stderr: 1
+            env:
+                CATALYST_DEBUG: 0
+                DBIC_TRACE: 0
+        -
+            host: ^stg
+            listen: '/tmp/.s.fcgi.service'
+            nproc: 5
+            pidfile: pid
+            keep_stderr: 1
+            env:
+                CATALYST_DEBUG: 1
+                DBIC_TRACE: 1
+        -
+            listen: '/tmp/.s.fcgi.service'
+            nproc: 1
+            pidfile: /tmp/pid
+            keep_stderr: 1
+            env:
+                CATALYST_DEBUG: 1
+                DBIC_TRACE: 1
+    WUI::Admin:
+        -
+            host: ^prd
+            listen: '/tmp/.s.fcgi.admin'
+            nproc: 5
+            pidfile: pid
+            keep_stderr: 1
+            env:
+                CATALYST_DEBUG: 1
+                DBIC_TRACE: 0
+
