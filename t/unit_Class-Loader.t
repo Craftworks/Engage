@@ -10,8 +10,6 @@ $ENV{'CONFIG_PATH'} = "$FindBin::Bin/conf";
 $ENV{'CONFIG_LOCAL_SUFFIX'} = 'log';
 
 {
-    package MyApp::API;
-    use Moose;
     package MyApp::DAO;
     use Moose;
     package MyApp;
