@@ -5,6 +5,7 @@ use MooseX::Types::Path::Class;
 use FindBin;
 use Config::Any;
 use Hash::Merge;
+with 'Engage::Utils';
 
 has config => (
     is  => 'rw',
@@ -91,9 +92,7 @@ sub _build_config {
     %config = %{ Hash::Merge::merge( \%config, values %$_ ) } for (@$config);
     Hash::Merge::set_behavior( $behavior );
 
-    my $pkg = ref $self;
-    my $app = $config{'name'} || substr($pkg, 0, index($pkg, ':'));
-    (my $abbr = substr $pkg, length $app) =~ s/^:://o;
+    (my $abbr = substr ref $self, length $self->app_name) =~ s/^:://o;
     my $local = $config{$abbr} || {};
 
     return { 'global' => \%config, %$local };

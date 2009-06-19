@@ -1,6 +1,7 @@
 package Engage::Class::Loader;
 
 use Moose::Role;
+with 'Engage::Utils';
 
 has 'class_for_loading' => (
     is  => 'ro',
@@ -17,13 +18,7 @@ has 'loaded_instances' => (
 sub BUILD {
     my $self = shift;
 
-    my $pkg = ref $self;
-    my $app = $self->can('config') && exists $self->config->{'name'}
-            ? $self->config->{'name'} 
-            : index($pkg, ':') != -1
-                ?  substr $pkg, 0, index($pkg, ':')
-                : $pkg;
-
+    my $app = $self->app_name;
     for my $class (@{ $self->class_for_loading }) {
         (my $method = lc $class) =~ s/::/_/go;
 
