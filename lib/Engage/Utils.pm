@@ -44,7 +44,7 @@ sub _build_home {
             $home = Path::Class::Dir->new(Cwd::cwd);
         }
 
-        $home = $home->absolute->cleanup;
+        $home = $home->absolute->cleanup->resolve;
         $home = $home->parent while $home =~ /b?lib$/o;
     }
 
@@ -71,7 +71,7 @@ sub path_to {
     my ( $self, @path ) = @_;
     my $path = Path::Class::Dir->new( $self->home, @path );
     if ( -d $path ) {
-        return $path;
+        return $path->resolve;
     }
     else {
         return Path::Class::File->new( $self->home, @path );
