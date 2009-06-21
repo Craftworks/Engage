@@ -5,6 +5,7 @@ use MooseX::Types::Path::Class;
 use FindBin;
 use Config::Any;
 use Hash::Merge;
+use Data::Visitor::Callback;
 with 'Engage::Utils';
 
 has config => (
@@ -91,6 +92,17 @@ sub _build_config {
     }, 'ENGAGE_CONFIG' );
     %config = %{ Hash::Merge::merge( \%config, values %$_ ) } for (@$config);
     Hash::Merge::set_behavior( $behavior );
+
+    # substitute data
+    Data::Visitor::Callback->new(
+        plain_value => sub {
+            return if !defined || !length;
+            s{__(\w+?)(?:\((.+?)\))?__}{
+                my $value = $self->$1( $2 ? split /,/, $2 : () );
+                defined $value ? $value : '';
+            }egx;
+        }
+    )->visit(\%config);
 
     (my $abbr = substr ref $self, length $self->app_name) =~ s/^:://o;
     my $local = $config{$abbr} || {};

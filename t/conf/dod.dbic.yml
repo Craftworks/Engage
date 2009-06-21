@@ -1,8 +1,13 @@
 DOD::DBIC:
-    schema_class:   'Engage::DOD::DBIC::Schema'
+    schema_class:   'MyApp::DOD::DBIC::Schema'
     datasources:
         dsn1:
-            - 'dbi:Mock:'
+            - 'dbi:SQLite:dbname=__path_to(t/sqlite/dod-dbic.db)__'
             - ''
             - ''
+
+substitute:
+    path_to: __path_to(somewhere)__
+    home: __home__
+    env_value: __env_value(foo)__
 

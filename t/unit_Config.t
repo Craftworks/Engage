@@ -1,6 +1,6 @@
 use strict;
 use warnings;
-use Test::More tests => 6;
+use Test::More tests => 7;
 use FindBin;
 
 BEGIN { use_ok 'Engage::Config' }
@@ -84,5 +84,19 @@ is_deeply( MyApp->new( config_suffix => 'product' )->loaded_config, [
             },
         },
     }, 'merge staging' );
+}
+
+#=============================================================================
+# substitute
+#=============================================================================
+{
+    $ENV{'MYAPP_FOO'} = 'env_foo';
+    my $home = Path::Class::Dir->new("$FindBin::Bin/../")->resolve;
+    my $config = MyApp->new( config_suffix => 'product' )->config->{'global'};
+    is_deeply( $config->{'substitute'}, {
+        'env_value' => 'env_foo',
+        'path_to' => "$home/somewhere",
+        'home' => "$home",
+    }, 'substitute' );
 }
 
