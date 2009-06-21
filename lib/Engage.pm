@@ -50,7 +50,7 @@ sub function2 {
 
 =head1 AUTHOR
 
-Craftworks, C<< <craftworks at cpan org> >>
+Craftworks, C<< <craftwork at cpan org> >>
 
 =head1 BUGS
 

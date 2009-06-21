@@ -2,7 +2,7 @@ use inc::Module::Install;
 
 name     'Engage';
 all_from 'lib/Engage.pm';
-author   'Craftworks <craftworks at cpan org>';
+author   'Craftworks <craftwork at cpan org>';
 license  'perl';
 
 requires 'Moose';
@@ -18,7 +18,7 @@ build_requires 'Test::More';
 build_requires 'Test::File::Contents';
 build_requires 'DBD::Mock';
 
+install_script glob('script/*.pl');
 auto_install;
-
 WriteAll;
 
