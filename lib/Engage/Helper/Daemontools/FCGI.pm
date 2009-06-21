@@ -57,12 +57,6 @@ sub mk_stuff {
         user   => $user || 'root',
     );
 
-    $self->run;
-}
-
-sub run {
-    my $self = shift;
-
     $self->_parse_args;
     $self->_mk_files;
 }
