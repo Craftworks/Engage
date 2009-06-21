@@ -83,3 +83,41 @@ no Moose::Role;
 1;
 
 __END__
+
+=head1 NAME
+
+=head1 SYNOPSIS
+
+=head1 DESCRIPTION
+
+=head1 METHODS
+
+=head2 env_value($class, $key)
+
+Checks for and returns an environment value. For instance, if $key is
+'home', then this method will check for and return the first value it finds,
+looking at $ENV{MYAPP_HOME} and $ENV{ENGAGE_HOME}.
+
+=head2 path_to(@path)
+
+Merges C<@path> with C<< home() >> and returns a
+L<Path::Class::Dir> object. Note you can usually use this object as
+a filename, but sometimes you will have to explicitly stringify it
+yourself by calling the C<<->stringify>> method.
+
+For example:
+
+    $self->path_to( 'db', 'sqlite.db' );
+
+=head1 AUTHOR
+
+Craftworks, C<< <craftwork at cpan org> >>
+
+=head1 COPYRIGHT & LICENSE
+
+Copyright 2009 Craftworks, all rights reserved.
+
+This program is free software; you can redistribute it and/or modify it
+under the same terms as Perl itself.
+
+=cut
