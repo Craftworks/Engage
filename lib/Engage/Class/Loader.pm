@@ -3,6 +3,8 @@ package Engage::Class::Loader;
 use Moose::Role;
 with 'Engage::Utils';
 
+requires 'BUILD';
+
 has 'class_for_loading' => (
     is  => 'ro',
     isa => 'ArrayRef[Str]',
@@ -15,7 +17,7 @@ has 'loaded_instances' => (
     default => sub { {} },
 );
 
-sub BUILD {
+before 'BUILD' => sub {
     my $self = shift;
 
     my $app = $self->app_name;
@@ -36,8 +38,7 @@ sub BUILD {
             return $instance;
         });
     }
-
-}
+};
 
 no Moose::Role;
 

@@ -18,6 +18,7 @@ $ENV{'CONFIG_LOCAL_SUFFIX'} = 'log';
     has '+class_for_loading' => (
         default => sub { [ qw(API DAO) ] },
     );
+    sub BUILD {}
 }
 
 #=============================================================================

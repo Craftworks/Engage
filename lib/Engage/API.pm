@@ -15,7 +15,9 @@ has '+class_for_loading' => (
 
 no Moose;
 
-__PACKAGE__->meta->make_immutable;
+sub BUILD {
+    shift->meta->make_immutable;
+}
 
 1;
 
@@ -24,8 +26,6 @@ __PACKAGE__->meta->make_immutable;
 =head1 SYNOPSIS
 
 =head1 DESCRIPTION
-
-=head1 METHODS
 
 =head1 AUTHOR
 
