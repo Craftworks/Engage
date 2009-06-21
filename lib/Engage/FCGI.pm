@@ -2,7 +2,6 @@ package Engage::FCGI;
 
 use Moose;
 use Sys::Hostname;
-use Data::Dumper;
 with 'Engage::Utils';
 with 'Engage::Config';
 
@@ -10,7 +9,7 @@ has '+config_prefix' => (
     default => 'fcgi',
 );
 
-has 'app' => (
+has 'site' => (
     is  => 'ro',
     isa => 'Str',
     required => 1,
@@ -21,16 +20,20 @@ has 'listen' => (
     isa => 'Str',
 );
 
+no Moose;
+
+__PACKAGE__->meta->make_immutable;
+
 sub BUILD {
     my $self = shift;
-    my $app  = $self->app;
+    my $site = $self->site;
     my $hostname = Sys::Hostname::hostname;
 
-    die qq{Cannot find key "$app" in configuration}
-        if ( !exists $self->config->{ $app } );
+    confess qq{Cannot find key "$site" in configuration}
+        if ( !exists $self->config->{ $site } );
 
     my $found = 0;
-    for my $config (@{ $self->config->{ $app } }) {
+    for my $config (@{ $self->config->{ $site } }) {
         my $regex = $config->{'host'} || '';
         if ( $hostname =~ /$regex/ ) {
             $found = 1;
@@ -38,7 +41,7 @@ sub BUILD {
             last;
         }
     }
-    $found or die qq{Cannot find config for "$hostname"};
+    $found or confess qq{Cannot find config for "$hostname"};
 
     if ( my $listen = delete $self->config->{'listen'} ) {
         $self->listen( $listen );
@@ -49,14 +52,10 @@ sub BUILD {
     }
 }
 
-no Moose;
-
-__PACKAGE__->meta->make_immutable;
-
 sub run {
     my $self = shift;
 
-    my $class = sprintf '%s::%s', $self->app_name, $self->app;
+    my $class = sprintf '%s::WUI::%s', $self->app_name, $self->site;
     local $ENV{'CATALYST_ENGINE'} = 'FastCGI';
     Class::MOP::load_class( $class );
     $class->run(
