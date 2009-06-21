@@ -1,3 +1,6 @@
 package MyApp::API;
+
 use Moose;
-__PACKAGE__->meta->make_immutable;
+extends 'Engage::API';
+
+1;
