@@ -297,6 +297,11 @@ sub mk_component {
         eval "require $class";
 
         if ($@) {
+            $class =~ s/^Engage/Catalyst/;
+            eval "require $class";
+        }
+
+        if ($@) {
             Catalyst::Exception->throw(
                 message => qq/Couldn't load helper "$class", "$@"/ );
         }
