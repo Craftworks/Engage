@@ -464,9 +464,9 @@ sub _mk_dirs {
     $self->mk_dir( $self->{conf} );
     $self->{template} = File::Spec->catdir( $self->{dir}, 'template' );
     $self->mk_dir( $self->{template} );
-    $self->{template_p} = File::Spec->catdir( $self->{template}, 'p' );
+    $self->{template_p} = File::Spec->catdir( $self->{template}, 'Service', 'p' );
     $self->mk_dir( $self->{template_p} );
-    $self->{template_m} = File::Spec->catdir( $self->{template}, 'm' );
+    $self->{template_m} = File::Spec->catdir( $self->{template}, 'Service', 'm' );
     $self->mk_dir( $self->{template_m} );
     $self->{static} = File::Spec->catdir( $self->{dir}, 'static' );
     $self->mk_dir( $self->{static} );
