@@ -38,9 +38,12 @@ sub schema {
         if ( !exists $self->config->{'datasources'}{$datasource} );
 
     if ( !exists $self->connections->{$datasource} ) {
-        $self->connections->{$datasource} = $self->schema_class->connect(
+        my $schema = $self->schema_class->connect(
             @{ $self->config->{'datasources'}{$datasource} }
         );
+        $schema->storage->debug( 1 );
+        $schema->storage->debugfh( $self->log );
+        $self->connections->{$datasource} = $schema;
     }
 
     return $self->connections->{$datasource};

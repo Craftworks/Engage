@@ -2,7 +2,5 @@ DOD::DBIC:
     schema_class:   'MyApp::DOD::DBIC::Schema'
     datasources:
         dsn1:
-            - 'dbi:SQLite:dbname=__path_to(t/sqlite/DOD-DBIC.db)__'
-            - ''
-            - ''
+            - 'dbi:SQLite:dbname=__path_to(sqlite/DOD-DBIC.db)__'
 
