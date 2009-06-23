@@ -1,6 +1,7 @@
 package Engage::API;
 
 use Moose;
+with 'Engage::Utils';
 with 'Engage::Config';
 with 'Engage::Log';
 with 'Engage::Class::Loader';
@@ -9,15 +10,10 @@ has '+config_prefix' => (
     default => 'api',
 );
 
-has '+class_for_loading' => (
-    default => sub { [ 'DAO' ] },
-);
-
 no Moose;
 
-sub BUILD {
-    shift->meta->make_immutable;
-}
+__PACKAGE__->add_loader('DAO');
+__PACKAGE__->meta->make_immutable;
 
 1;
 

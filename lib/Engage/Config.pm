@@ -6,7 +6,8 @@ use FindBin;
 use Config::Any;
 use Hash::Merge;
 use Data::Visitor::Callback;
-with 'Engage::Utils';
+
+requires 'appclass';
 
 has config => (
     is  => 'rw',
@@ -104,7 +105,7 @@ sub _build_config {
         }
     )->visit(\%config);
 
-    (my $abbr = substr ref $self, length $self->app_name) =~ s/^:://o;
+    (my $abbr = substr (ref $self, length $self->appclass)) =~ s/^:://o;
     my $local = $config{$abbr} || {};
 
     return { 'global' => \%config, %$local };

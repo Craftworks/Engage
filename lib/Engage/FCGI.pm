@@ -55,7 +55,7 @@ sub BUILD {
 sub run {
     my $self = shift;
 
-    my $class = sprintf '%s::WUI::%s', $self->app_name, $self->site;
+    my $class = sprintf '%s::WUI::%s', $self->appclass, $self->site;
     local $ENV{'CATALYST_ENGINE'} = 'FastCGI';
     Class::MOP::load_class( $class );
     $class->run(

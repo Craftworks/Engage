@@ -3,6 +3,7 @@ use warnings;
 use Test::More tests => 5;
 use Test::File::Contents;
 use FindBin;
+use lib "$FindBin::Bin/lib";
 use Data::Dumper;
 
 BEGIN { use_ok 'Engage::Log' }
@@ -10,12 +11,7 @@ BEGIN { use_ok 'Engage::Log' }
 $ENV{'CONFIG_PATH'} = "$FindBin::Bin/conf";
 $ENV{'CONFIG_LOCAL_SUFFIX'} = 'log';
 
-{
-    package MyApp::API::Foo;
-    use Moose;
-    with 'Engage::Config';
-    with 'Engage::Log';
-}
+use MyApp::API::Foo;
 
 #=============================================================================
 # new

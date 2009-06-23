@@ -2,6 +2,7 @@ package Engage::CLI::Command;
 
 use Moose;
 extends 'MooseX::App::Cmd::Command';
+with 'Engage::Utils';
 with 'Engage::Config';
 with 'Engage::Log';
 with 'Engage::Class::Loader';
@@ -10,15 +11,10 @@ has '+config_prefix' => (
     default => 'cli'
 );
 
-has '+class_for_loading' => (
-    default => sub { [ 'API' ] },
-);
-
 no Moose;
 
-sub BUILD {
-    shift->meta->make_immutable;
-}
+__PACKAGE__->add_loader('API');
+__PACKAGE__->meta->make_immutable;
 
 1;
 

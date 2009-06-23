@@ -26,7 +26,7 @@ FCGI:
             env:
                 CATALYST_DEBUG: 1
                 DBIC_TRACE: 1
-    WUI::Admin:
+    Admin:
         -
             host: ^prd
             listen: '/tmp/.s.fcgi.admin'

@@ -2,42 +2,26 @@ use strict;
 use warnings;
 use Test::More tests => 7;
 use FindBin;
+use lib "$FindBin::Bin/lib";
 
 BEGIN { use_ok 'Engage::Config' }
 
-{
-    package MyApp;
-    use Moose;
-    with 'Engage::Config';
-    has '+config_path' => (
-        default => "$FindBin::Bin/conf/"
-    );
-    has '+config_prefix' => (
-        default => 'dod'
-    );
+$ENV{'CONFIG_PATH'} = "$FindBin::Bin/conf";
 
-    package Engage::API::Email;
-    use Moose;
-    with 'Engage::Config';
-    has '+config_path' => (
-        default => "$FindBin::Bin/conf/"
-    );
-    has '+config_prefix' => (
-        default => 'api'
-    );
-}
+use MyApp::API::Foo;
+use MyApp::API::Email;
 
-Engage::API::Email->new;
+my $class = 'MyApp::API::Foo';
 
 #=============================================================================
 # new
 #=============================================================================
-ok( MyApp->new, 'new' );
+ok( $class->new, 'new' );
 
 #=============================================================================
 # loaded_config
 #=============================================================================
-is_deeply( MyApp->new( config_prefix => 'dod' )->loaded_config, [
+is_deeply( $class->new( config_prefix => 'dod' )->loaded_config, [
     "$FindBin::Bin/conf/dod.dbic.yml",
     "$FindBin::Bin/conf/dod.general.yml",
     "$FindBin::Bin/conf/dod.general-local.yml",
@@ -46,16 +30,19 @@ is_deeply( MyApp->new( config_prefix => 'dod' )->loaded_config, [
 #=============================================================================
 # config_suffix
 #=============================================================================
-is_deeply( MyApp->new( config_suffix => 'product' )->loaded_config, [
-    "$FindBin::Bin/conf/dod.dbic.yml",
-    "$FindBin::Bin/conf/dod.general.yml",
+is_deeply( $class->new(
+        config_prefix => 'dod',
+        config_suffix => 'product'
+    )->loaded_config, [
+        "$FindBin::Bin/conf/dod.dbic.yml",
+        "$FindBin::Bin/conf/dod.general.yml",
 ], 'loaded config exclude local' );
 
 #=============================================================================
 # merge
 #=============================================================================
 {
-    my $config = Engage::API::Email->new( config_suffix => 'product' )->config;
+    my $config = MyApp::API::Email->new( config_suffix => 'product' )->config;
     my $local = {
         'sender' => {
             'mailer' =>  'SMTP',
@@ -73,7 +60,7 @@ is_deeply( MyApp->new( config_suffix => 'product' )->loaded_config, [
     }, 'merge product' );
 }
 {
-    my $config = Engage::API::Email->new( config_suffix => 'staging' )->config;
+    my $config = MyApp::API::Email->new( config_suffix => 'staging' )->config;
     delete $config->{'global'};
     is_deeply( $config, {
         'sender' => {
@@ -91,8 +78,8 @@ is_deeply( MyApp->new( config_suffix => 'product' )->loaded_config, [
 #=============================================================================
 {
     $ENV{'MYAPP_FOO'} = 'env_foo';
-    my $home = Path::Class::Dir->new("$FindBin::Bin/../")->resolve;
-    my $config = MyApp->new( config_suffix => 'product' )->config->{'global'};
+    my $home = $class->new->home;
+    my $config = $class->new( config_prefix => 'test' )->config->{'global'};
     is_deeply( $config->{'substitute'}, {
         'env_value' => 'env_foo',
         'path_to' => "$home/somewhere",

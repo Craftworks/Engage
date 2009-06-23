@@ -1,0 +1,5 @@
+substitute:
+    path_to: __path_to(somewhere)__
+    home: __home__
+    env_value: __env_value(foo)__
+

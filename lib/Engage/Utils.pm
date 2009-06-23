@@ -11,19 +11,6 @@ has 'home' => (
     coerce => 1,
 );
 
-has 'app_name' => (
-    is  => 'ro',
-    isa => 'Str',
-    builder => '_build_app_name',
-);
-
-sub _build_app_name {
-    my $pkg = ref shift;
-    return index($pkg, ':') != -1
-            ?  substr $pkg, 0, index($pkg, ':')
-            : $pkg;
-}
-
 sub _build_home {
     my $self = shift;
 
@@ -51,15 +38,27 @@ sub _build_home {
     return $home;
 }
 
+sub appclass {
+    my $self  = shift;
+    my $class = ref $self || $self;
+    if ( $class =~ /^(.+?)::(?:DOD|DAO|API|CLI|WUI|Job|FCGI)(?:::)?.*$/o ) {
+        return $1;
+    }
+}
+
+sub appprefix {
+    my $self  = shift;
+    my $class = ref $self || $self;
+    $class =~ s/::/_/go;
+    $class = lc $class;
+    return $class;
+}
+
 sub env_value {
     my ( $self, $key ) = @_;
+    $key = uc $key;
 
-    my $class = blessed $self ? ref $self : $self;
-    $class =~ s/::/_/g;
-    $class = uc $class;
-    $key   = uc $key;
-
-    for my $prefix ( $class, 'ENGAGE' ) {
+    for my $prefix ( uc $self->appclass, 'ENGAGE' ) {
         if ( defined( my $value = $ENV{"${prefix}_${key}"} ) ) {
             return $value;
         }
@@ -91,6 +90,14 @@ __END__
 =head1 DESCRIPTION
 
 =head1 METHODS
+
+=head2 appprefix
+
+    MyApp::Foo becomes myapp_foo
+
+=head2 appclass
+
+return application class
 
 =head2 env_value($class, $key)
 
