@@ -1,15 +1,8 @@
 package Engage::Class::Loader;
 
 use Moose::Role;
-with 'Engage::Utils';
 
-requires 'BUILD';
-
-has 'class_for_loading' => (
-    is  => 'ro',
-    isa => 'ArrayRef[Str]',
-    required => 1,
-);
+requires 'appclass';
 
 has 'loaded_instances' => (
     is  => 'ro',
@@ -17,25 +10,26 @@ has 'loaded_instances' => (
     default => sub { {} },
 );
 
-before 'BUILD' => sub {
+sub add_loader {
     my $self = shift;
+    my @class_for_loading = @_;
 
-    my $app = $self->app_name;
-    for my $class (@{ $self->class_for_loading }) {
+    for my $class (@class_for_loading) {
         (my $method = lc $class) =~ s/::/_/go;
 
         $self->meta->add_method($method, sub {
             my ( $self, $comp ) = @_;
 
-            my $module = "$app\::$class\::$comp";
-            my $instance = $self->loaded_instances->{$module};
+            my $app       = $self->appclass;
+            my $module    = "$app\::$class\::$comp";
+            my $instances = $self->loaded_instances;
 
-            if ( !defined $instance ) {
+            if ( !defined $instances->{$module} ) {
                 Class::MOP::load_class($module);
-                $instance = $module->new;
+                $instances->{$module} = $module->new;
             }
 
-            return $instance;
+            return $instances->{$module};
         });
     }
 };
@@ -51,6 +45,12 @@ __END__
 =head1 SYNOPSIS
 
 =head1 DESCRIPTION
+
+=head1 METHODS
+
+=head2 add_loader(@class_for_loading)
+
+add method to caller class
 
 =head1 AUTHOR
 
