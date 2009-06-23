@@ -293,7 +293,64 @@ sub mk_component {
       || eval { @{ [ getpwuid($<) ] }[6] }
       || 'A clever guy';
     $self->{base} ||= File::Spec->catdir( $FindBin::Bin, '..' );
-    unless ( $_[0] =~ /^(?:model|view|controller)$/i ) {
+    if ( $_[0] =~ /^(?:dod|dao|api)$/i ) {
+        my $type   = uc shift;
+        my $name   = shift || "Missing name for DOD/DAO/API";
+        my $helper = shift;
+        my @args   = @_;
+        $self->{long_type} = $type;
+        my $appdir = File::Spec->catdir( split /\:\:/, $app );
+        my $test_path =
+          File::Spec->catdir( $FindBin::Bin, '..', 'lib', $appdir, $type );
+        $self->{type}  = $type;
+        $self->{name}  = $name;
+        $self->{class} = "$app\::$type\::$name";
+
+        # Class
+        my $path =
+          File::Spec->catdir( $FindBin::Bin, '..', 'lib', $appdir, $type );
+        my $file = $name;
+        if ( $name =~ /\:/ ) {
+            my @path = split /\:\:/, $name;
+            $file = pop @path;
+            $path = File::Spec->catdir( $path, @path );
+        }
+        $self->mk_dir($path);
+        $file = File::Spec->catfile( $path, "$file.pm" );
+        $self->{file} = $file;
+
+        # Test
+        $self->{test_dir} = File::Spec->catdir( $FindBin::Bin, '..', 't' );
+        $self->{test}     = $self->next_test;
+
+        # Helper
+        if ($helper) {
+            my $comp  = $self->{long_type};
+            my $class = "Engage::Helper::$comp\::$helper";
+            eval "require $class";
+
+            if ($@) {
+                Catalyst::Exception->throw(
+                    message => qq/Couldn't load helper "$class", "$@"/ );
+            }
+
+            if ( $class->can('mk_compclass') ) {
+                return 1 unless $class->mk_compclass( $self, @args );
+            }
+            else { return 1 unless $self->_mk_compclass }
+
+            if ( $class->can('mk_comptest') ) {
+                $class->mk_comptest( $self, @args );
+            }
+            else { $self->_mk_comptest }
+        }
+        # Fallback
+        else {
+            return 1 unless $self->_mk_compclass;
+            $self->_mk_comptest;
+        }
+    }
+    elsif ( $_[0] !~ /^(?:model|view|controller)$/i ) {
         my $helper = shift;
         my @args   = @_;
         my $class  = "Engage::Helper::$helper";
@@ -438,10 +495,11 @@ sub next_test {
         $self->{uri} = "/$prefix";
     }
     my $dir  = $self->{test_dir};
-    my $site = $self->{site};
+    my $site = $self->{site} || '';
     my $type = lc $self->{type};
+    $site .= '_' if $site;
     $self->mk_dir($dir);
-    return File::Spec->catfile( $dir, "$type\_$site\_$tname" );
+    return File::Spec->catfile( $dir, "$type\_${site}$tname" );
 }
 
 sub render_file {
@@ -692,6 +750,8 @@ sub _mk_create {
 sub _mk_compclass {
     my $self = shift;
     my $file = $self->{file};
+    $self->{framework} = $self->{type} =~ /DOD|DAO|API/ ? 'Engage' : 'Catalyst';
+    $self->{is_engage} = $self->{framework} eq 'Engage';
     return $self->render_file( 'compclass', "$file" );
 }
 
@@ -1410,24 +1470,26 @@ it under the same terms as Perl itself.
 =cut
 __compclass__
 package [% class %];
-
+[% IF is_engage %]
+use Moose;
+extends 'Engage::[% type %]';
+[% ELSE %]
 use strict;
 use warnings;
 use parent 'Catalyst::[% long_type %]';
-
+[% END %]
 =head1 NAME
 
-[% class %] - Catalyst [% long_type %]
+[% class %] - [% framework %] [% long_type %]
 
 =head1 DESCRIPTION
 
-Catalyst [% long_type %].
-[% IF long_type == 'Controller' %]
+[% framework %] [% long_type %].
+
 =head1 METHODS
 
 =cut
-
-
+[% IF long_type == 'Controller' %]
 =head2 index
 
 =cut
@@ -1437,7 +1499,10 @@ sub index :Path :Args(0) {
 
     $c->response->body('Matched [% class %] in [%name%].');
 }
+[% ELSIF is_engage %]
+no Moose;
 
+__PACKAGE__->meta->make_immutable;
 [% END %]
 =head1 AUTHOR
 
