@@ -260,6 +260,9 @@ sub mk_app {
         $self->_mk_class_fcgi;
         $self->_mk_class_cli;
         $self->_mk_class_cli_command;
+        $self->_mk_class_dod;
+        $self->_mk_class_dao;
+        $self->_mk_class_api;
         $self->_mk_readme;
         $self->_mk_changes;
         $self->_mk_apptest;
@@ -517,14 +520,18 @@ sub _mk_dirs {
         $self->mk_dir( $self->{c} );
     }
 
+    $self->{dod} = File::Spec->catdir( $self->{mod}, 'DOD' );
+    $self->mk_dir( $self->{dod} );
+    $self->{dao} = File::Spec->catdir( $self->{mod}, 'DAO' );
+    $self->mk_dir( $self->{dao} );
+    $self->{api} = File::Spec->catdir( $self->{mod}, 'API' );
+    $self->mk_dir( $self->{api} );
+    $self->{job} = File::Spec->catdir( $self->{mod}, 'Job' );
+    $self->mk_dir( $self->{job} );
     $self->{cli} = File::Spec->catdir( $self->{mod}, 'CLI' );
     $self->mk_dir( $self->{cli} );
     $self->{command} = File::Spec->catdir( $self->{cli}, 'Command' );
     $self->mk_dir( $self->{command} );
-    $self->mk_dir( File::Spec->catdir( $self->{mod}, 'DOD' ) );
-    $self->mk_dir( File::Spec->catdir( $self->{mod}, 'DAO' ) );
-    $self->mk_dir( File::Spec->catdir( $self->{mod}, 'API' ) );
-    $self->mk_dir( File::Spec->catdir( $self->{mod}, 'Job' ) );
 
     my $name = $self->{name};
     $self->{rootname} =
@@ -573,6 +580,24 @@ sub _mk_class_fcgi {
     my $self = shift;
     $self->render_file( 'class_fcgi',
         File::Spec->catfile( $self->{mod}, "FCGI.pm" ) );
+}
+
+sub _mk_class_dod {
+    my $self = shift;
+    my $dod  = $self->{dod};
+    $self->render_file( 'class_dod', "$dod.pm" );
+}
+
+sub _mk_class_dao {
+    my $self = shift;
+    my $dao  = $self->{dao};
+    $self->render_file( 'class_dao', "$dao.pm" );
+}
+
+sub _mk_class_api {
+    my $self = shift;
+    my $api  = $self->{api};
+    $self->render_file( 'class_api', "$api.pm" );
 }
 
 sub _mk_class_cli {
@@ -810,6 +835,33 @@ package [% name %]::FCGI;
 
 use Moose;
 extends 'Engage::FCGI';
+
+__PACKAGE__->meta->make_immutable;
+
+1;
+__class_dod__
+package [% name %]::DOD;
+
+use Moose;
+extends 'Engage::DOD';
+
+__PACKAGE__->meta->make_immutable;
+
+1;
+__class_dao__
+package [% name %]::DAO;
+
+use Moose;
+extends 'Engage::DAO';
+
+__PACKAGE__->meta->make_immutable;
+
+1;
+__class_api__
+package [% name %]::API;
+
+use Moose;
+extends 'Engage::API';
 
 __PACKAGE__->meta->make_immutable;
 
