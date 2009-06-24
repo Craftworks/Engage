@@ -260,6 +260,7 @@ sub mk_app {
         $self->_mk_class_fcgi;
         $self->_mk_class_cli;
         $self->_mk_class_cli_command;
+        $self->_mk_class_job;
         $self->_mk_class_dod;
         $self->_mk_class_dao;
         $self->_mk_class_api;
@@ -280,6 +281,7 @@ sub mk_app {
         $self->_mk_create;
         $self->_mk_fcgi;
         $self->_mk_cli;
+        $self->_mk_job;
         $self->_mk_information;
     }
     return $self->{dir};
@@ -670,6 +672,12 @@ sub _mk_class_cli_command {
     $self->render_file( 'class_cli_command', "$command.pm" );
 }
 
+sub _mk_class_job {
+    my $self = shift;
+    my $job  = $self->{job};
+    $self->render_file( 'class_job', "$job.pm" );
+}
+
 sub _mk_readme {
     my $self = shift;
     my $dir  = $self->{dir};
@@ -729,6 +737,14 @@ sub _mk_cli {
     my $appprefix = $self->{appprefix};
     $self->render_file( 'cli', "$script\/$appprefix\_cli.pl" );
     chmod 0700, "$script/$appprefix\_cli.pl";
+}
+
+sub _mk_job {
+    my $self      = shift;
+    my $script    = $self->{script};
+    my $appprefix = $self->{appprefix};
+    $self->render_file( 'job', "$script\/$appprefix\_job.pl" );
+    chmod 0700, "$script/$appprefix\_job.pl";
 }
 
 sub _mk_test {
@@ -940,6 +956,15 @@ package [% name %]::CLI::Command;
 
 use Moose;
 extends 'Engage::CLI::Command';
+
+__PACKAGE__->meta->make_immutable;
+
+1;
+__class_job__
+package [% name %]::Job;
+
+use Moose;
+extends 'Engage::Job';
 
 __PACKAGE__->meta->make_immutable;
 
@@ -1327,6 +1352,15 @@ __cli__
 use FindBin;
 use lib "$FindBin::Bin/../lib";
 use [% name %]::CLI -run;
+
+__job__
+[% startperl %]
+
+use FindBin;
+use lib "$FindBin::Bin/../lib";
+use [% name %]::Job;
+
+[% name %]::Job->new->run;
 
 __test__
 [% startperl %]
