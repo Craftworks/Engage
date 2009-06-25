@@ -13,6 +13,8 @@ requires 'Config::Any';
 requires 'Hash::Merge';
 requires 'FCGI';
 requires 'FCGI::ProcManager';
+requires 'Parallel::Prefork';
+requires 'TheSchwartz';
 
 build_requires 'Test::More';
 build_requires 'Test::File::Contents';
