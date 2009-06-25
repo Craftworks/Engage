@@ -1,6 +1,6 @@
 use strict;
 use warnings;
-use Test::More tests => 7;
+use Test::More tests => 10;
 use FindBin;
 use lib "$FindBin::Bin/lib";
 
@@ -43,7 +43,7 @@ is_deeply( $class->new(
 #=============================================================================
 {
     my $config = MyApp::API::Email->new( config_suffix => 'product' )->config;
-    my $local = {
+    is_deeply( $config, {
         'sender' => {
             'mailer' =>  'SMTP',
             'mailer_args' => { 
@@ -51,17 +51,10 @@ is_deeply( $class->new(
                 'Hello' => 'smtp_host',
             },
         },
-    };
-    is_deeply( $config, {
-        %$local,
-        'global' => {
-            'API::Email' => $local,
-        },
     }, 'merge product' );
 }
 {
     my $config = MyApp::API::Email->new( config_suffix => 'staging' )->config;
-    delete $config->{'global'};
     is_deeply( $config, {
         'sender' => {
             'mailer' =>  'SMTP',
@@ -79,11 +72,30 @@ is_deeply( $class->new(
 {
     $ENV{'MYAPP_FOO'} = 'env_foo';
     my $home = $class->new->home;
-    my $config = $class->new( config_prefix => 'test' )->config->{'global'};
+    my $config = $class->new( config_prefix => 'test' )->config;
     is_deeply( $config->{'substitute'}, {
         'env_value' => 'env_foo',
         'path_to' => "$home/somewhere",
         'home' => "$home",
     }, 'substitute' );
+}
+
+#=============================================================================
+# switch_by_hostname
+#=============================================================================
+{
+    local $ENV{'HOSTNAME'} = 'prod001';
+    my $config = $class->new( config_prefix => 'test', switch_by_hostname => 1 )->config;
+    is( $config->{'nproc'}, 5, "switch_by_hostname $ENV{HOSTNAME}" );
+}
+{
+    local $ENV{'HOSTNAME'} = 'develop';
+    my $config = $class->new( config_prefix => 'test', switch_by_hostname => 1 )->config;
+    is( $config->{'nproc'}, 3, "switch_by_hostname $ENV{HOSTNAME}" );
+}
+{
+    local $ENV{'HOSTNAME'} = 'somewhere';
+    my $config = $class->new( config_prefix => 'test', switch_by_hostname => 1 )->config;
+    is( $config->{'nproc'}, 1, "switch_by_hostname $ENV{HOSTNAME}" );
 }
 

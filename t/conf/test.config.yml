@@ -1,5 +1,12 @@
-substitute:
-    path_to: __path_to(somewhere)__
-    home: __home__
-    env_value: __env_value(foo)__
+API::Foo:
+    substitute:
+        path_to: __path_to(somewhere)__
+        home: __home__
+        env_value: __env_value(foo)__
+    '^prod\d{3}':
+        nproc: 5
+    '^dev':
+        nproc: 3
+    'DEFAULT':
+        nproc: 1
 

@@ -6,6 +6,8 @@ use FindBin;
 use Config::Any;
 use Hash::Merge;
 use Data::Visitor::Callback;
+use Scalar::Alias;
+use namespace::clean -except => 'meta';
 
 requires 'appclass';
 
@@ -40,6 +42,14 @@ has config_suffix => (
     default => sub { $ENV{'CONFIG_LOCAL_SUFFIX'} || 'local' },
 );
 
+has switch_by_hostname => (
+    is  => 'ro',
+    isa => 'Bool',
+    default => 0,
+);
+
+no Moose::Role;
+
 sub _build_loaded_config {
     my $self   = shift;
     my $prefix = $self->config_prefix;
@@ -71,7 +81,25 @@ sub _build_config {
     });
     return +{} if !@$config;
 
-    # merge hash
+    my %config = _merge_hash($config);
+
+    _substitute($self, \%config);
+
+    my $class = ref $self;
+    (my $abbr = substr ($class, length $self->appclass)) =~ s/^:://o;
+    my $class_config = $config{$abbr} || {};
+
+    if ( $self->switch_by_hostname ) {
+        _find_by_hostname($class_config);
+    }
+
+    return $class_config;
+}
+
+no namespace::clean;
+
+sub _merge_hash {
+    my $config = shift;
     my %config;
     my $behavior = Hash::Merge::get_behavior;
     Hash::Merge::specify_behavior({
@@ -93,25 +121,41 @@ sub _build_config {
     }, 'ENGAGE_CONFIG' );
     %config = %{ Hash::Merge::merge( \%config, values %$_ ) } for (@$config);
     Hash::Merge::set_behavior( $behavior );
+    return %config;
+}
 
-    # substitute data
+sub _substitute {
+    my ( $self, $config ) = @_;
     Data::Visitor::Callback->new(
         plain_value => sub {
-            return if !defined || !length;
+            return unless ( defined && length );
             s{__(\w+?)(?:\((.+?)\))?__}{
                 my $value = $self->$1( $2 ? split /,/, $2 : () );
                 defined $value ? $value : '';
             }egx;
         }
-    )->visit(\%config);
-
-    (my $abbr = substr (ref $self, length $self->appclass)) =~ s/^:://o;
-    my $local = $config{$abbr} || {};
-
-    return { 'global' => \%config, %$local };
+    )->visit($config);
 }
 
-no Moose::Role;
+sub _find_by_hostname {
+    my alias $config = shift;
+
+    require Sys::Hostname;
+    my $hostname = $ENV{'HOSTNAME'} || Sys::Hostname::hostname();
+
+    my $default  = delete $config->{'DEFAULT'} || {};
+    for my $host_regex ( keys %$config ) {
+        if ( $hostname =~ qr/$host_regex/ ) {
+            $config = $config->{$host_regex};
+            return;
+        }
+    }
+
+    confess qq{Cannot find config for "$hostname"} unless %$default;
+    $config = $default;
+}
+
+use namespace::clean;
 
 1;
 
