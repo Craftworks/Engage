@@ -11,38 +11,38 @@ use namespace::clean -except => 'meta';
 
 requires 'appclass';
 
-has config => (
+has 'config' => (
     is  => 'rw',
     isa => 'HashRef',
     builder => '_build_config',
 );
 
-has config_path => (
+has 'config_path' => (
     is  => 'rw',
     isa => 'Path::Class::Dir',
     coerce => 1,
     default  => sub { $ENV{'CONFIG_PATH'} || "$FindBin::Bin/../conf" },
 );
 
-has loaded_config => (
+has 'loaded_config' => (
     is  => 'ro',
     isa => 'ArrayRef[Path::Class::File]',
     lazy_build => 1,
 );
 
-has config_prefix => (
+has 'config_prefix' => (
     is  => 'ro',
     isa => 'Str',
     required => 1,
 );
 
-has config_suffix => (
+has 'config_suffix' => (
     is  => 'ro',
     isa => 'Str',
     default => sub { $ENV{'CONFIG_LOCAL_SUFFIX'} || 'local' },
 );
 
-has switch_by_hostname => (
+has 'config_switch' => (
     is  => 'ro',
     isa => 'Bool',
     default => 0,
@@ -89,7 +89,7 @@ sub _build_config {
     (my $abbr = substr ($class, length $self->appclass)) =~ s/^:://o;
     my $class_config = $config{$abbr} || {};
 
-    if ( $self->switch_by_hostname ) {
+    if ( $self->config_switch ) {
         _find_by_hostname($class_config);
     }
 

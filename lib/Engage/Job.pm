@@ -15,7 +15,7 @@ has '+config_prefix' => (
     default => 'job',
 );
 
-has '+switch_by_hostname' => (
+has '+config_switch' => (
     default => 1,
 );
 

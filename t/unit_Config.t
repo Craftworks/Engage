@@ -81,21 +81,21 @@ is_deeply( $class->new(
 }
 
 #=============================================================================
-# switch_by_hostname
+# config_switch
 #=============================================================================
 {
     local $ENV{'HOSTNAME'} = 'prod001';
-    my $config = $class->new( config_prefix => 'test', switch_by_hostname => 1 )->config;
-    is( $config->{'nproc'}, 5, "switch_by_hostname $ENV{HOSTNAME}" );
+    my $config = $class->new( config_prefix => 'test', config_switch => 1 )->config;
+    is( $config->{'nproc'}, 5, "config_switch $ENV{HOSTNAME}" );
 }
 {
     local $ENV{'HOSTNAME'} = 'develop';
-    my $config = $class->new( config_prefix => 'test', switch_by_hostname => 1 )->config;
-    is( $config->{'nproc'}, 3, "switch_by_hostname $ENV{HOSTNAME}" );
+    my $config = $class->new( config_prefix => 'test', config_switch => 1 )->config;
+    is( $config->{'nproc'}, 3, "config_switch $ENV{HOSTNAME}" );
 }
 {
     local $ENV{'HOSTNAME'} = 'somewhere';
-    my $config = $class->new( config_prefix => 'test', switch_by_hostname => 1 )->config;
-    is( $config->{'nproc'}, 1, "switch_by_hostname $ENV{HOSTNAME}" );
+    my $config = $class->new( config_prefix => 'test', config_switch => 1 )->config;
+    is( $config->{'nproc'}, 1, "config_switch $ENV{HOSTNAME}" );
 }
 
