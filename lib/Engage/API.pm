@@ -1,13 +1,19 @@
 package Engage::API;
 
 use Moose;
+use Engage::Job::Client;
 with 'Engage::Utils';
 with 'Engage::Config';
 with 'Engage::Log';
 with 'Engage::Class::Loader';
 
-has '+config_prefix' => (
-    default => 'api',
+has '+config_prefix' => ( default => 'api' );
+
+has 'job' => (
+    is  => 'ro',
+    isa => 'Engage::Job::Client',
+    default => sub { Engage::Job::Client->instance },
+    lazy => 1,
 );
 
 no Moose;
