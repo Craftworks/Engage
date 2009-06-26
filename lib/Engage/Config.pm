@@ -51,7 +51,12 @@ has 'loaded_config' => (
 has 'config_key' => (
     is  => 'ro',
     isa => 'Str',
-    builder => '_build_config_key',
+    default => sub {
+        my $self     = shift;
+        my $appclass = $self->appclass;
+        my ($key) = ref($self) =~ /^$appclass\::(.+)/;
+        $key;
+    },
 );
 
 has 'config_switch' => (
@@ -61,14 +66,6 @@ has 'config_switch' => (
 );
 
 no Moose::Role;
-
-sub _build_config_key {
-    my $self     = shift;
-    my $class    = ref $self;
-    my $appclass = $self->appclass;
-    my ($key) = $class =~ /^$appclass\::(.+)/;
-    $key;
-}
 
 sub _build_loaded_files {
     my $self   = shift;
