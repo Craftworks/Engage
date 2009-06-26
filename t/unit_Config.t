@@ -19,13 +19,13 @@ my $class = 'MyApp::API::Foo';
 ok( $class->new, 'new' );
 
 #=============================================================================
-# loaded_config
+# loaded_files
 #=============================================================================
-is_deeply( $class->new( config_prefix => 'dod' )->loaded_config, [
+is_deeply( $class->new( config_prefix => 'dod' )->loaded_files, [
     "$FindBin::Bin/conf/dod.dbic.yml",
     "$FindBin::Bin/conf/dod.general.yml",
     "$FindBin::Bin/conf/dod.general-local.yml",
-], 'loaded config include local' );
+], 'loaded files include local' );
 
 #=============================================================================
 # config_suffix
@@ -33,10 +33,10 @@ is_deeply( $class->new( config_prefix => 'dod' )->loaded_config, [
 is_deeply( $class->new(
         config_prefix => 'dod',
         config_suffix => 'product'
-    )->loaded_config, [
+    )->loaded_files, [
         "$FindBin::Bin/conf/dod.dbic.yml",
         "$FindBin::Bin/conf/dod.general.yml",
-], 'loaded config exclude local' );
+], 'loaded files exclude local' );
 
 #=============================================================================
 # merge

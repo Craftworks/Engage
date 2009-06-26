@@ -24,12 +24,6 @@ has 'config_path' => (
     default  => sub { $ENV{'CONFIG_PATH'} || "$FindBin::Bin/../conf" },
 );
 
-has 'loaded_config' => (
-    is  => 'ro',
-    isa => 'ArrayRef[Path::Class::File]',
-    lazy_build => 1,
-);
-
 has 'config_prefix' => (
     is  => 'ro',
     isa => 'Str',
@@ -42,6 +36,24 @@ has 'config_suffix' => (
     default => sub { $ENV{'CONFIG_LOCAL_SUFFIX'} || 'local' },
 );
 
+has 'loaded_files' => (
+    is  => 'ro',
+    isa => 'ArrayRef[Path::Class::File]',
+    lazy_build => 1,
+);
+
+has 'loaded_config' => (
+    is  => 'ro',
+    isa => 'ArrayRef[HashRef]',
+    lazy_build => 1,
+);
+
+has 'config_key' => (
+    is  => 'ro',
+    isa => 'Str',
+    builder => '_build_config_key',
+);
+
 has 'config_switch' => (
     is  => 'ro',
     isa => 'Bool',
@@ -50,7 +62,15 @@ has 'config_switch' => (
 
 no Moose::Role;
 
-sub _build_loaded_config {
+sub _build_config_key {
+    my $self     = shift;
+    my $class    = ref $self;
+    my $appclass = $self->appclass;
+    my ($key) = $class =~ /^$appclass\::(.+)/;
+    $key;
+}
+
+sub _build_loaded_files {
     my $self   = shift;
     my $prefix = $self->config_prefix;
     my $suffix = $self->config_suffix;
@@ -72,56 +92,61 @@ sub _build_loaded_config {
     } @files ];
 }
 
+sub _build_loaded_config {
+    my $self = shift;
+    Config::Any->load_files({
+        files   => $self->loaded_files,
+        use_ext => 1,
+    });
+}
+
 sub _build_config {
     my $self = shift;
 
-    my $config = Config::Any->load_files({
-        files   => $self->loaded_config,
-        use_ext => 1,
-    });
-    return +{} if !@$config;
+    return +{} unless @{ $self->loaded_config };
 
-    my %config = _merge_hash($config);
+    my $config = {};
+    _merge_hash($self, $config);
+    _substitute($self, $config);
 
-    _substitute($self, \%config);
-
-    my $class = ref $self;
-    (my $abbr = substr ($class, length $self->appclass)) =~ s/^:://o;
-    my $class_config = $config{$abbr} || {};
+    $config = $config->{$self->config_key} || {};
 
     if ( $self->config_switch ) {
-        _find_by_hostname($class_config);
+        _find_by_hostname($config);
     }
 
-    return $class_config;
+    return $config;
 }
 
 no namespace::clean;
 
 sub _merge_hash {
+    my $self   = shift;
     my $config = shift;
-    my %config;
+
+    my $msg = '%s and %s cannot merge in config file.';
     my $behavior = Hash::Merge::get_behavior;
     Hash::Merge::specify_behavior({
         SCALAR => {
             SCALAR => sub { $_[1] },
-            ARRAY  => sub { Carp::croak 'SCALAR and ARRAY cannot merge in config file.' },
-            HASH   => sub { Carp::croak 'SCALAR and HASH cannot merge in config file.' },
+            ARRAY  => sub { confess sprintf $msg, 'SCALAR', 'ARRAY' },
+            HASH   => sub { confess sprintf $msg, 'SCALAR', 'HASH'  },
         },
         ARRAY  => {
-            SCALAR => sub { Carp::croak 'ARRAY and SCALAR cannot merge in config file.' },
+            SCALAR => sub { confess sprintf $msg, 'ARRAY', 'SCALAR' },
             ARRAY  => sub { $_[1] },
-            HASH   => sub { Carp::croak 'ARRAY and HASH cannot merge in config file.' },
+            HASH   => sub { confess sprintf $msg, 'ARRAY', 'HASH'   },
         },
         HASH   => {
-            SCALAR => sub { Carp::croak 'HASH and SCALAR cannot merge in config file.' },
-            ARRAY  => sub { Carp::croak 'HASH and ARRAY cannot merge in config file.' },
+            SCALAR => sub { confess sprintf $msg, 'HASH', 'SCALAR'  },
+            ARRAY  => sub { confess sprintf $msg, 'HASH', 'ARRAY'   },
             HASH   => sub { Hash::Merge::_merge_hashes( $_[0], $_[1] ) },
         },
     }, 'ENGAGE_CONFIG' );
-    %config = %{ Hash::Merge::merge( \%config, values %$_ ) } for (@$config);
+    for ( @{ $self->loaded_config } ) {
+        %$config = %{ Hash::Merge::merge( $config, values %$_ ) };
+    }
     Hash::Merge::set_behavior( $behavior );
-    return %config;
 }
 
 sub _substitute {
@@ -138,21 +163,21 @@ sub _substitute {
 }
 
 sub _find_by_hostname {
-    my alias $config = shift;
+    my $config = shift;
 
     require Sys::Hostname;
     my $hostname = $ENV{'HOSTNAME'} || Sys::Hostname::hostname();
 
     my $default  = delete $config->{'DEFAULT'} || {};
     for my $host_regex ( keys %$config ) {
-        if ( $hostname =~ qr/$host_regex/ ) {
-            $config = $config->{$host_regex};
+        if ( $hostname =~ /$host_regex/ ) {
+            %$config = %{ $config->{$host_regex} };
             return;
         }
     }
 
     confess qq{Cannot find config for "$hostname"} unless %$default;
-    $config = $default;
+    %$config = %$default;
 }
 
 use namespace::clean;
