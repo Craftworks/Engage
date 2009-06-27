@@ -4,7 +4,7 @@ Job:
     max_work_per_child: 10
     databases:
       -
-        dsn: 'dbi:SQLite:__path_to(t/sqlite/Job.db)__'
+        dsn: 'dbi:SQLite:__path_to(sqlite/Job.db)__'
         user:
         pass:
   'DEFAULT':
@@ -12,7 +12,7 @@ Job:
     max_work_per_child: 3
     databases:
       -
-        dsn: 'dbi:SQLite:__path_to(t/sqlite/Job.db)__'
+        dsn: 'dbi:SQLite:__path_to(sqlite/Job.db)__'
         user:
         pass:
 
