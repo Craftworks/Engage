@@ -1,4 +1,4 @@
-package Engage::Job;
+package Engage::Job::Daemon;
 
 use Moose;
 use Sys::Hostname;
