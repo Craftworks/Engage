@@ -49,7 +49,7 @@ sub _build_log_dispatch_conf {
             class     => 'Log::Dispatch::Screen',
             min_level => 'debug',
             stderr    => 1,
-            format    => '%d [%p] %m at %P line %L%n',
+            format    => '%d{%Y-%m-%d %H:%M:%S} [%p] %m at %P line %L%n',
         }
     }
 }
