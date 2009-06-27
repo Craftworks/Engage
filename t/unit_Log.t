@@ -33,7 +33,6 @@ isa_ok( $o->log,    'Log::Dispatch::Config', 'log' );
 {
     local $ENV{'MYAPP_DEBUG'} = 1;
     my $o = MyApp::API::Foo->new;
-    $o->log_dispatch_conf;
     is( $o->debug, 1, 'debug enable' );
 }
 

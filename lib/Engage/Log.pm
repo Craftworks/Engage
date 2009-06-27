@@ -6,9 +6,9 @@ with 'MooseX::LogDispatch';
 requires 'env_value';
 
 has 'debug' => (
-    is  => 'rw',
+    is  => 'ro',
     isa => 'Bool',
-    default => 0,
+    default => sub { shift->env_value( 'DEBUG' ) ? 1 : 0 },
 );
 
 has 'log' => (
@@ -40,8 +40,6 @@ Class::MOP::Class->create(
 
 sub _build_log_dispatch_conf {
     my $self = shift;
-
-    $self->debug( $self->env_value( 'DEBUG' ) ? 1 : 0 );
 
     if ( $self->can('config') && $self->config->{'Log::Dispatch'} ) {
         return $self->config->{'Log::Dispatch'};
