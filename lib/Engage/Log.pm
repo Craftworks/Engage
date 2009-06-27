@@ -3,7 +3,13 @@ package Engage::Log;
 use Moose::Role;
 with 'MooseX::LogDispatch';
 
-$Log::Dispatch::Config::CallerDepth = 1; 
+requires 'env_value';
+
+has 'debug' => (
+    is  => 'rw',
+    isa => 'Bool',
+    default => 0,
+);
 
 has 'log' => (
     is  => 'ro',
@@ -18,6 +24,10 @@ has 'log_dispatch_conf' => (
     lazy_build => 1,
 );
 
+no Moose::Role;
+
+$Log::Dispatch::Config::CallerDepth = 1; 
+
 Class::MOP::Class->create(
     'Log::Dispatch' => (
         methods => {
@@ -30,6 +40,9 @@ Class::MOP::Class->create(
 
 sub _build_log_dispatch_conf {
     my $self = shift;
+
+    $self->debug( $self->env_value( 'DEBUG' ) ? 1 : 0 );
+
     if ( $self->can('config') && $self->config->{'Log::Dispatch'} ) {
         return $self->config->{'Log::Dispatch'};
     }

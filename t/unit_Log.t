@@ -1,6 +1,6 @@
 use strict;
 use warnings;
-use Test::More tests => 5;
+use Test::More tests => 7;
 use Test::File::Contents;
 use FindBin;
 use lib "$FindBin::Bin/lib";
@@ -16,13 +16,26 @@ use MyApp::API::Foo;
 #=============================================================================
 # new
 #=============================================================================
-ok( my $o = MyApp::API::Foo->new( config_prefix => 'api' ), 'new' );
+my $o = new_ok( 'MyApp::API::Foo' => [ config_prefix => 'api' ] );
 
 #=============================================================================
 # isa
 #=============================================================================
 isa_ok( $o->logger, 'Log::Dispatch::Config', 'logger' );
 isa_ok( $o->log,    'Log::Dispatch::Config', 'log' );
+
+#=============================================================================
+# debug
+#=============================================================================
+{
+    is( $o->debug, 0, 'debug disable' );
+}
+{
+    local $ENV{'MYAPP_DEBUG'} = 1;
+    my $o = MyApp::API::Foo->new;
+    $o->log_dispatch_conf;
+    is( $o->debug, 1, 'debug enable' );
+}
 
 #=============================================================================
 # logging
