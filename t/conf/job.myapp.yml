@@ -1,0 +1,18 @@
+Job:
+  '^product\d{3}':
+    max_workers: 5
+    max_work_per_child: 10
+    databases:
+      -
+        dsn: 'dbi:SQLite:__path_to(t/sqlite/Job.db)__'
+        user:
+        pass:
+  'DEFAULT':
+    max_workers: 2
+    max_work_per_child: 3
+    databases:
+      -
+        dsn: 'dbi:SQLite:__path_to(t/sqlite/Job.db)__'
+        user:
+        pass:
+
