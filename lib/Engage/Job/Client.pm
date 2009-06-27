@@ -33,7 +33,7 @@ sub assign {
     $self->job->insert( $worker, @args );
 }
 
-sub can_do    { shift->job->can_do    }
-sub work_once { shift->job->work_once }
+sub can_do    { shift->job->can_do(@_)    }
+sub work_once { shift->job->work_once(@_) }
 
 1;
