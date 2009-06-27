@@ -11,6 +11,12 @@ has 'home' => (
     coerce => 1,
 );
 
+has 'term_width' => (
+    is  => 'ro',
+    isa => 'Int',
+    lazy_build => 1,
+);
+
 sub _build_home {
     my $self = shift;
 
@@ -36,6 +42,24 @@ sub _build_home {
     }
 
     return $home;
+}
+
+sub _build_term_width {
+    my $self = shift;
+
+    my $width = eval '
+        use Term::Size::Any;
+        (Term::Size::Any::chars())[0];
+    ';
+
+    if ($@) {
+        $width = $ENV{'COLUMNS'}
+            if exists $ENV{'COLUMNS'}
+            && $ENV{'COLUMNS'} =~ /^\d+$/;
+    }
+
+    $width = 80 unless ( $width && 80 <= $width );
+    $width;
 }
 
 sub appclass {
