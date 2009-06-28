@@ -1,0 +1,13 @@
+Job::Worker:
+  'dev':
+    class: 'super_dev'
+    foo: 1
+  'DEFAULT':
+    class: 'super'
+    foo: 0
+
+Job::Worker::Foo:
+  'DEFAULT':
+    class: 'default'
+    bar: 1
+

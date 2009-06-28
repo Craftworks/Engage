@@ -59,10 +59,39 @@ has 'config_key' => (
     },
 );
 
+has 'config_base' => (
+    is  => 'ro',
+    isa => 'Str',
+    default => 'BASE',
+);
+
 has 'config_switch' => (
     is  => 'ro',
     isa => 'Bool',
     default => 0,
+);
+
+has 'merging_behavior' => (
+    is  => 'ro',
+    isa => 'HashRef[HashRef[CodeRef]]',
+    default => sub {
+        my $msg = '%s and %s cannot merge in config file.'; +{
+        SCALAR => {
+            SCALAR => sub { $_[1] },
+            ARRAY  => sub { confess sprintf $msg, 'SCALAR', 'ARRAY' },
+            HASH   => sub { confess sprintf $msg, 'SCALAR', 'HASH'  },
+        },
+        ARRAY  => {
+            SCALAR => sub { confess sprintf $msg, 'ARRAY', 'SCALAR' },
+            ARRAY  => sub { $_[1] },
+            HASH   => sub { confess sprintf $msg, 'ARRAY', 'HASH'   },
+        },
+        HASH   => {
+            SCALAR => sub { confess sprintf $msg, 'HASH', 'SCALAR'  },
+            ARRAY  => sub { confess sprintf $msg, 'HASH', 'ARRAY'   },
+            HASH   => sub { Hash::Merge::_merge_hashes( $_[0], $_[1] ) },
+        }, };
+    },
 );
 
 no Moose::Role;
@@ -103,14 +132,18 @@ sub _build_config {
     return +{} unless @{ $self->loaded_config };
 
     my $config = {};
+    my $behavior = Hash::Merge::get_behavior;
+    Hash::Merge::specify_behavior( $self->merging_behavior, 'ENGAGE_CONFIG' );
     _merge_hash($self, $config);
-    _substitute($self, $config);
-
-    $config = $config->{$self->config_key} || {};
 
     if ( $self->config_switch ) {
-        _find_by_hostname($config);
+        _select_by_hostname($config);
     }
+
+    _select_hash($self, $config);
+    Hash::Merge::set_behavior( $behavior );
+
+    _substitute($self, $config);
 
     return $config;
 }
@@ -121,29 +154,23 @@ sub _merge_hash {
     my $self   = shift;
     my $config = shift;
 
-    my $msg = '%s and %s cannot merge in config file.';
-    my $behavior = Hash::Merge::get_behavior;
-    Hash::Merge::specify_behavior({
-        SCALAR => {
-            SCALAR => sub { $_[1] },
-            ARRAY  => sub { confess sprintf $msg, 'SCALAR', 'ARRAY' },
-            HASH   => sub { confess sprintf $msg, 'SCALAR', 'HASH'  },
-        },
-        ARRAY  => {
-            SCALAR => sub { confess sprintf $msg, 'ARRAY', 'SCALAR' },
-            ARRAY  => sub { $_[1] },
-            HASH   => sub { confess sprintf $msg, 'ARRAY', 'HASH'   },
-        },
-        HASH   => {
-            SCALAR => sub { confess sprintf $msg, 'HASH', 'SCALAR'  },
-            ARRAY  => sub { confess sprintf $msg, 'HASH', 'ARRAY'   },
-            HASH   => sub { Hash::Merge::_merge_hashes( $_[0], $_[1] ) },
-        },
-    }, 'ENGAGE_CONFIG' );
     for ( @{ $self->loaded_config } ) {
         %$config = %{ Hash::Merge::merge( $config, values %$_ ) };
     }
-    Hash::Merge::set_behavior( $behavior );
+}
+
+sub _select_hash {
+    my $self   = shift;
+    my $config = shift;
+
+    if ( ref $config->{$self->config_base} ) {
+        %$config = %{ Hash::Merge::merge(
+            $config->{$self->config_base},
+            $config->{$self->config_key} || {} ) };
+    }
+    else {
+        %$config = %{ $config->{$self->config_key} || {} };
+    }
 }
 
 sub _substitute {
@@ -159,22 +186,26 @@ sub _substitute {
     )->visit($config);
 }
 
-sub _find_by_hostname {
+sub _select_by_hostname {
     my $config = shift;
 
-    require Sys::Hostname;
-    my $hostname = $ENV{'HOSTNAME'} || Sys::Hostname::hostname();
+    my $hostname = eval {
+        require Sys::Hostname;
+        $ENV{'HOSTNAME'} || Sys::Hostname::hostname();
+    };
 
-    my $default  = delete $config->{'DEFAULT'} || {};
-    for my $host_regex ( keys %$config ) {
-        if ( $hostname =~ /$host_regex/ ) {
-            %$config = %{ $config->{$host_regex} };
-            return;
+    for my $class ( keys %$config ) {
+        my $found = 0;
+        my $default  = delete $config->{$class}{'DEFAULT'} || {};
+        for my $host_regex ( keys %{ $config->{$class} } ) {
+            if ( $hostname =~ /$host_regex/ ) {
+                $found = 1;
+                $config->{$class} = $config->{$class}{$host_regex};
+                last;
+            }
         }
+        $found or $config->{$class} = $default;
     }
-
-    confess qq{Cannot find config for "$hostname"} unless %$default;
-    %$config = %$default;
 }
 
 use namespace::clean;

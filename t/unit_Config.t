@@ -1,6 +1,6 @@
 use strict;
 use warnings;
-use Test::More tests => 10;
+use Test::More tests => 11;
 use FindBin;
 use lib "$FindBin::Bin/lib";
 
@@ -8,8 +8,10 @@ BEGIN { use_ok 'Engage::Config' }
 
 $ENV{'CONFIG_PATH'} = "$FindBin::Bin/conf";
 
+use Data::Dumper;
 use MyApp::API::Foo;
 use MyApp::API::Email;
+use MyApp::Job::Worker::Foo;
 
 my $class = 'MyApp::API::Foo';
 
@@ -97,5 +99,17 @@ is_deeply( $class->new(
     local $ENV{'HOSTNAME'} = 'somewhere';
     my $config = $class->new( config_prefix => 'test', config_switch => 1 )->config;
     is( $config->{'nproc'}, 1, "config_switch $ENV{HOSTNAME}" );
+}
+
+#=============================================================================
+# config_base
+#=============================================================================
+{
+    my $config = MyApp::Job::Worker::Foo->new(
+        config_prefix => 'job',
+        config_switch => 1,
+        config_base   => 'Job::Worker',
+    )->config;
+    is_deeply( $config, { class => 'default', foo => 1, bar => 1 }, 'config base' );
 }
 
