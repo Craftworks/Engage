@@ -9,6 +9,7 @@ use File::Path;
 use FindBin;
 use IO::File;
 use POSIX 'strftime';
+use Path::Class;
 use Template;
 use Catalyst::Utils;
 use Catalyst::Exception;
@@ -297,11 +298,10 @@ sub mk_component {
     $self->{author} = $self->{author} = $ENV{'AUTHOR'}
       || eval { @{ [ getpwuid($<) ] }[6] }
       || 'A clever guy';
-    $self->{base} ||= File::Spec->catdir( $FindBin::Bin, '..' );
+    $self->{base} ||= Path::Class::Dir->new( File::Spec->catdir( $FindBin::Bin, '..' ) )->resolve;
     if ( $_[0] =~ /^(?:dod|dao|api)$/i ) {
         my $type   = uc shift;
         my $name   = shift || "Missing name for DOD/DAO/API";
-        my $helper = shift;
         my @args   = @_;
         $self->{long_type} = $type;
         my $appdir = File::Spec->catdir( split /\:\:/, $app );
@@ -328,32 +328,34 @@ sub mk_component {
         $self->{test_dir} = File::Spec->catdir( $FindBin::Bin, '..', 't' );
         $self->{test}     = $self->next_test;
 
-        # Helper
-        if ($helper) {
-            my $comp  = $self->{long_type};
-            my $class = "Engage::Helper::$comp\::$helper";
-            eval "require $class";
+        return 1 unless $self->_mk_compclass;
+        $self->_mk_comptest;
+    }
+    elsif ( $_[0] =~ /^(?:command|worker)$/i ) {
+        my $sub_type = ucfirst lc shift;
+        my $type   = ($sub_type eq 'Command') ? 'CLI' : 'Job';
+        my $name   = shift || "Missing name for Command/Worker";
+        my @args   = @_;
+        my $appdir = File::Spec->catdir( split /\:\:/, $app );
+        $self->{type}  = $type;
+        $self->{sub_type}  = $sub_type;
+        $self->{name}  = $name;
+        $self->{class} = "$app\::$type\::$sub_type\::$name";
 
-            if ($@) {
-                Catalyst::Exception->throw(
-                    message => qq/Couldn't load helper "$class", "$@"/ );
-            }
-
-            if ( $class->can('mk_compclass') ) {
-                return 1 unless $class->mk_compclass( $self, @args );
-            }
-            else { return 1 unless $self->_mk_compclass }
-
-            if ( $class->can('mk_comptest') ) {
-                $class->mk_comptest( $self, @args );
-            }
-            else { $self->_mk_comptest }
+        # Class
+        my $path =
+          File::Spec->catdir( $FindBin::Bin, '..', 'lib', $appdir, $type, $sub_type );
+        my $file = $name;
+        if ( $name =~ /\:/ ) {
+            my @path = split /\:\:/, $name;
+            $file = pop @path;
+            $path = File::Spec->catdir( $path, @path );
         }
-        # Fallback
-        else {
-            return 1 unless $self->_mk_compclass;
-            $self->_mk_comptest;
-        }
+        $self->mk_dir($path);
+        $file = File::Spec->catfile( $path, "$file.pm" );
+        $self->{file} = $file;
+
+        return 1 unless $self->_mk_compclass;
     }
     elsif ( $_[0] !~ /^(?:model|view|controller)$/i ) {
         my $helper = shift;
@@ -795,9 +797,15 @@ sub _mk_create {
 sub _mk_compclass {
     my $self = shift;
     my $file = $self->{file};
-    $self->{framework} = $self->{type} =~ /DOD|DAO|API/ ? 'Engage' : 'Catalyst';
-    $self->{is_engage} = $self->{framework} eq 'Engage';
-    return $self->render_file( 'compclass', "$file" );
+    if ( $self->{type} =~ /CLI|Job/ ) {
+        my $sub_type = lc $self->{sub_type};
+        return $self->render_file( "compclass_$sub_type", "$file" );
+    }
+    else {
+        $self->{framework} = $self->{type} =~ /DOD|DAO|API/ ? 'Engage' : 'Catalyst';
+        $self->{is_engage} = $self->{framework} eq 'Engage';
+        return $self->render_file( 'compclass', "$file" );
+    }
 }
 
 sub _mk_comptest {
@@ -1060,20 +1068,32 @@ FCGI:
         DBIC_TRACE: 1
 
 __config_job__
-Job:
+BASE:
+  'DEFAULT':
+    Log::Dispatch: &log
+      class:      'Log::Dispatch::Screen'
+      min_level:  'debug'
+      stderr:     1
+      format:     '%d{%Y-%m-%d %H:%M:%S} [%p] %m%n'
+
+Job::Daemon:
   '^product\d{3}':
     max_workers: 5
     max_work_per_child: 20
-    databases:
-      - &1
-        dsn: 'dbi:SQLite:__path_to(sqlite/Job.db)__'
-        user:
-        pass:
   'DEFAULT':
     max_workers: 3
     max_work_per_child: 5
+
+Job::Client:
+  'DEFAULT':
     databases:
-      - *1
+      -
+        dsn: 'dbi:SQLite:__path_to(sqlite/Job.db)__'
+        user:
+        pass:
+
+Job::Worker:
+  Log::Dispatch: *log
 
 __schema_job_sqlite__
 CREATE TABLE funcmap (
@@ -1694,14 +1714,7 @@ it under the same terms as Perl itself.
 =cut
 __compclass__
 package [% class %];
-[% IF is_engage %]
-use Moose;
-extends 'Engage::[% type %]';
-[% ELSE %]
-use strict;
-use warnings;
-use parent 'Catalyst::[% long_type %]';
-[% END %]
+
 =head1 NAME
 
 [% class %] - [% framework %] [% long_type %]
@@ -1710,6 +1723,20 @@ use parent 'Catalyst::[% long_type %]';
 
 [% framework %] [% long_type %].
 
+=cut
+[% IF is_engage %]
+use Moose;
+
+extends 'Engage::[% type %]';
+
+no Moose;
+
+__PACKAGE__->meta->make_immutable;
+[% ELSE %]
+use strict;
+use warnings;
+use parent 'Catalyst::[% long_type %]';
+[% END %]
 =head1 METHODS
 
 =cut
@@ -1723,10 +1750,6 @@ sub index :Path :Args(0) {
 
     $c->response->body('Matched [% class %] in [%name%].');
 }
-[% ELSIF is_engage %]
-no Moose;
-
-__PACKAGE__->meta->make_immutable;
 [% END %]
 =head1 AUTHOR
 
@@ -1740,6 +1763,79 @@ it under the same terms as Perl itself.
 =cut
 
 1;
+__compclass_command__
+package [% class %];
+
+use Moose;
+
+extends '[% app %]::CLI::Command';
+
+no Moose;
+
+__PACKAGE__->meta->make_immutable;
+
+sub run {
+    my ( $self, $opt, $args ) = @_;
+}
+
+1;
+
+=head1 NAME
+
+[% class %] - blah blah blah
+
+=head1 SYNOPSIS
+
+=head1 DESCRIPTION
+
+=head1 AUTHOR
+
+[%author%]
+
+=head1 LICENSE
+
+This library is free software. You can redistribute it and/or modify
+it under the same terms as Perl itself.
+
+=cut
+
+__compclass_worker__
+package [% class %];
+
+use Moose;
+
+extends 'Engage::Job::Worker';
+
+no Moose;
+
+__PACKAGE__->meta->make_immutable;
+
+sub work {
+    my ( $self, $job ) = @_;
+    $job->completed;
+}
+
+1;
+
+=head1 NAME
+
+[% class %] - blah blah blah
+
+=head1 SYNOPSIS
+
+=head1 DESCRIPTION
+
+=head1 AUTHOR
+
+[%author%]
+
+=head1 LICENSE
+
+This library is free software. You can redistribute it and/or modify
+it under the same terms as Perl itself.
+
+=cut
+
 __comptest__
 use strict;
 use warnings;
