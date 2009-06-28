@@ -59,7 +59,8 @@ sub BUILD {
     if ( $self->debug ) {
         my $t = Text::SimpleTable->new($self->term_width - 6);
         $t->row($_) for @{$self->worker_classes};
-        $self->log->debug( "Loaded workers:\n" . $t->draw . "\n" );
+        $self->log->debug( "Loaded workers:\n" . $t->draw . "\n" )
+            if @{ $self->worker_classes };
     }
 }
 
@@ -70,6 +71,7 @@ sub run {
     $self->log->debug("Start daemon $$") if $self->debug;
     (my $appprefix = $self->appprefix) =~ s/_/-/;
     $0 = "$appprefix-pm";
+    $self->job->can_do; # check database connection
 
     while ( $pm->signal_received ne 'TERM' ) {
 
