@@ -593,6 +593,8 @@ sub _mk_dirs {
     $self->mk_dir( $self->{cli} );
     $self->{command} = File::Spec->catdir( $self->{cli}, 'Command' );
     $self->mk_dir( $self->{command} );
+    $self->{fcgi} = File::Spec->catdir( $self->{mod}, 'FCGI' );
+    $self->mk_dir( $self->{fcgi} );
     $self->{job} = File::Spec->catdir( $self->{mod}, 'Job' );
     $self->mk_dir( $self->{job} );
     $self->{worker} = File::Spec->catdir( $self->{job}, 'Worker' );
@@ -635,8 +637,8 @@ sub _mk_rootclass {
 
 sub _mk_class_fcgi {
     my $self = shift;
-    $self->render_file( 'class_fcgi',
-        File::Spec->catfile( $self->{mod}, "FCGI.pm" ) );
+    my $fcgi = $self->{fcgi};
+    $self->render_file( 'class_fcgi', "$fcgi/Daemon.pm" );
 }
 
 sub _mk_class_dod {
@@ -833,9 +835,9 @@ use Catalyst::Runtime 5.80;
 #                 directory
 
 use parent qw/Catalyst/;
-use Catalyst qw/-Debug
-                ConfigLoader
-                Static::Simple/;
+use Catalyst qw/
+    ConfigLoader
+/;
 our $VERSION = '0.01';
 
 # Configure the application.
@@ -944,10 +946,10 @@ it under the same terms as Perl itself.
 
 1;
 __class_fcgi__
-package [% name %]::FCGI;
+package [% name %]::FCGI::Daemon;
 
 use Moose;
-extends 'Engage::FCGI';
+extends 'Engage::FCGI::Daemon';
 
 __PACKAGE__->meta->make_immutable;
 
@@ -1032,12 +1034,16 @@ requires 'Moose';
 requires 'MooseX::Types::Path::Class';
 requires 'MooseX::LogDispatch';
 requires 'MooseX::App::Cmd';
+requires 'Config::Any';
+requires 'Hash::Merge';
 requires 'Catalyst::Runtime' => '[% catalyst_version %]';
 requires 'Catalyst::Plugin::ConfigLoader';
 requires 'Catalyst::Plugin::Static::Simple';
 requires 'Catalyst::Action::RenderView';
 requires 'FCGI';
 requires 'FCGI::ProcManager';
+requires 'Parallel::Prefork';
+requires 'TheSchwartz';
 requires 'parent';
 requires 'Config::General'; # This should reflect the config file format you've chosen
                  # See Catalyst::Plugin::ConfigLoader for supported formats
@@ -1047,24 +1053,25 @@ install_script glob('script/*.pl');
 auto_install;
 WriteAll;
 __config_fcgi__
-FCGI:
-  Service:
-    -
-      host: ^product\d{3}
+BASE:
+  'DEFAULT':
+    Service:
       listen: '/tmp/.s.fcgi.service'
+      pidfile: 'pid'
+      keep_stderr: 1
+
+FCGI::Daemon:
+  '^product\d{3}':
+    Service:
       nproc: 5
-      pidfile: pid
-      keep_stderr: 1
       env:
-        [% appenv %]_DEBUG: 0
+        CATALYST_DEBUG: 0
         DBIC_TRACE: 1
-    -
-      listen: '/tmp/.s.fcgi.service'
+  'DEFAULT':
+    Service:
       nproc: 1
-      pidfile: pid
-      keep_stderr: 1
       env:
-        [% appenv %]_DEBUG: 1
+        CATALYST_DEBUG: 1
         DBIC_TRACE: 1
 
 __config_job__
@@ -1552,9 +1559,9 @@ __fcgi__
 
 use FindBin;
 use lib "$FindBin::Bin/../lib";
-use [% name %]::FCGI;
+use [% name %]::FCGI::Daemon;
 
-[% name %]::FCGI->new( site => shift )->run;
+[% name %]::FCGI::Daemon->new( site => shift )->run;
 
 __cli__
 [% startperl %]

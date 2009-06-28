@@ -1,13 +1,12 @@
-package Engage::FCGI;
+package Engage::FCGI::Daemon;
 
 use Moose;
-use Sys::Hostname;
+
 with 'Engage::Utils';
 with 'Engage::Config';
 
-has '+config_prefix' => (
-    default => 'fcgi',
-);
+has '+config_prefix' => ( default => 'fcgi' );
+has '+config_switch' => ( default => 1      );
 
 has 'site' => (
     is  => 'ro',
@@ -26,29 +25,15 @@ __PACKAGE__->meta->make_immutable;
 
 sub BUILD {
     my $self = shift;
-    my $site = $self->site;
-    my $hostname = Sys::Hostname::hostname;
 
-    confess qq{Cannot find key "$site" in configuration}
-        if ( !exists $self->config->{ $site } );
-
-    my $found = 0;
-    for my $config (@{ $self->config->{ $site } }) {
-        my $regex = $config->{'host'} || '';
-        if ( $hostname =~ /$regex/ ) {
-            $found = 1;
-            $self->config( $config );
-            last;
-        }
-    }
-    $found or confess qq{Cannot find config for "$hostname"};
+    $self->config( $self->config->{ $self->site } );
 
     if ( my $listen = delete $self->config->{'listen'} ) {
         $self->listen( $listen );
     }
 
     if ( my $env = delete $self->config->{'env'} ) {
-        $ENV{$_} = $env->{$_} for ( keys %$env );
+        $ENV{$_} = $env->{$_} for keys %$env;
     }
 }
 
