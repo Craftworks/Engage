@@ -5,7 +5,6 @@ use Sys::Hostname;
 use Module::Pluggable::Object;
 use Parallel::Prefork;
 use Text::SimpleTable;
-use TheSchwartz;
 use namespace::clean -except => 'meta';
 
 with 'Engage::Utils';
