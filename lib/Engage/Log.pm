@@ -26,7 +26,7 @@ has 'log_dispatch_conf' => (
 
 no Moose::Role;
 
-$Log::Dispatch::Config::CallerDepth = 1; 
+$Log::Dispatch::Config::CallerDepth = 0;
 
 Class::MOP::Class->create(
     'Log::Dispatch' => (
