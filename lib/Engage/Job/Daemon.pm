@@ -13,7 +13,6 @@ with 'Engage::Log';
 with 'Engage::Job';
 
 has '+config_prefix' => ( default => 'job' ); 
-has '+config_key'    => ( default => 'Job' );
 has '+config_switch' => ( default => 1     );
 
 has 'proc_manager' => (

@@ -8,7 +8,6 @@ with 'Engage::Config';
 with 'Engage::Log';
 
 has '+config_prefix' => ( default => 'job' );
-has '+config_key'    => ( default => 'Job' );
 has '+config_switch' => ( default => 1     );
 
 has 'job' => (
