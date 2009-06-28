@@ -4,7 +4,7 @@ use Moose;
 
 extends 'MyApp::API';
 
-sub foo {}
+sub foo { 'foo' }
 
 no Moose;
 
