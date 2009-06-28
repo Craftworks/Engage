@@ -29,8 +29,9 @@ sub assign {
     my ( $self, $worker, @args ) = @_;
     my $appclass = $self->appclass;
     $worker = "$appclass\::Job::Worker::$worker";
-    $self->log->debug("Job assign to $worker") if $self->debug;
-    $self->job->insert( $worker, @args );
+    my $handle = $self->job->insert( $worker, @args );
+    $self->log->info("Job assign to $worker") if $self->debug;
+    return $handle;
 }
 
 sub can_do    { shift->job->can_do(@_)    }
