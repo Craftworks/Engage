@@ -71,7 +71,7 @@ sub run {
     $self->log->debug("Start daemon $$") if $self->debug;
     (my $appprefix = $self->appprefix) =~ s/_/-/;
     $0 = "$appprefix-pm";
-    $self->job->can_do; # check database connection
+    $self->job->job; # check database connection
 
     while ( $pm->signal_received ne 'TERM' ) {
 
