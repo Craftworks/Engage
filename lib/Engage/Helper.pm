@@ -254,16 +254,19 @@ sub mk_app {
 
     if ($gen_app) {
         $self->_mk_dirs;
-        $self->_mk_config;
         $self->_mk_appclass;
         $self->_mk_rootclass;
         $self->_mk_class_fcgi;
         $self->_mk_class_cli;
         $self->_mk_class_cli_command;
-        $self->_mk_class_job;
+        $self->_mk_class_job_daemon;
+        $self->_mk_class_job_client;
         $self->_mk_class_dod;
         $self->_mk_class_dao;
         $self->_mk_class_api;
+        $self->_mk_config_fcgi;
+        $self->_mk_config_job;
+        $self->_mk_schema_job;
         $self->_mk_readme;
         $self->_mk_changes;
         $self->_mk_apptest;
@@ -544,14 +547,12 @@ sub _mk_dirs {
     $self->mk_dir( $self->{css} );
     $self->{js} = File::Spec->catdir( $self->{static}, 'js' );
     $self->mk_dir( $self->{js} );
-#   $self->{daemon} = File::Spec->catdir( $self->{dir}, 'daemon' );
-#   $self->mk_dir( $self->{daemon} );
-#   $self->{fcgi_service} = File::Spec->catdir( $self->{daemon}, 'fcgi_service' );
-#   $self->mk_dir( $self->{fcgi_service} );
-#   $self->mk_dir( File::Spec->catdir( $self->{fcgi_service}, 'log' ) );
-#   $self->{fcgi_admin} = File::Spec->catdir( $self->{daemon}, 'fcgi_admin' );
-#   $self->mk_dir( $self->{fcgi_admin} );
-#   $self->mk_dir( File::Spec->catdir( $self->{fcgi_admin}, 'log' ) );
+    $self->{sql} = File::Spec->catdir( $self->{dir}, 'sql' );
+    $self->mk_dir( $self->{sql} );
+    $self->{sql_schema} = File::Spec->catdir( $self->{sql}, 'schema' );
+    $self->mk_dir( $self->{sql_schema} );
+    $self->{sql_data} = File::Spec->catdir( $self->{sql}, 'data' );
+    $self->mk_dir( $self->{sql_data} );
     $self->{t} = File::Spec->catdir( $self->{dir}, 't' );
     $self->mk_dir( $self->{t} );
 
@@ -586,12 +587,14 @@ sub _mk_dirs {
     $self->mk_dir( $self->{dao} );
     $self->{api} = File::Spec->catdir( $self->{mod}, 'API' );
     $self->mk_dir( $self->{api} );
-    $self->{job} = File::Spec->catdir( $self->{mod}, 'Job' );
-    $self->mk_dir( $self->{job} );
     $self->{cli} = File::Spec->catdir( $self->{mod}, 'CLI' );
     $self->mk_dir( $self->{cli} );
     $self->{command} = File::Spec->catdir( $self->{cli}, 'Command' );
     $self->mk_dir( $self->{command} );
+    $self->{job} = File::Spec->catdir( $self->{mod}, 'Job' );
+    $self->mk_dir( $self->{job} );
+    $self->{worker} = File::Spec->catdir( $self->{job}, 'Worker' );
+    $self->mk_dir( $self->{worker} );
 
     my $name = $self->{name};
     $self->{rootname} =
@@ -612,14 +615,6 @@ sub _mk_makefile {
         $self->_deprecate_file(
             File::Spec->catdir( $self->{dir}, 'Build.PL' ) );
     }
-}
-
-sub _mk_config {
-    my $self      = shift;
-    my $dir       = $self->{conf};
-    my $appprefix = $self->{appprefix};
-    $self->render_file( 'config',
-        File::Spec->catfile( $dir, "fcgi.$appprefix.yml" ) );
 }
 
 sub _mk_appclass {
@@ -672,10 +667,44 @@ sub _mk_class_cli_command {
     $self->render_file( 'class_cli_command', "$command.pm" );
 }
 
-sub _mk_class_job {
+sub _mk_class_job_daemon {
     my $self = shift;
     my $job  = $self->{job};
-    $self->render_file( 'class_job', "$job.pm" );
+    $self->render_file( 'class_job_daemon', "$job/Daemon.pm" );
+}
+
+sub _mk_class_job_client {
+    my $self = shift;
+    my $job  = $self->{job};
+    $self->render_file( 'class_job_client', "$job/Client.pm" );
+}
+
+sub _mk_config_fcgi {
+    my $self      = shift;
+    my $dir       = $self->{conf};
+    my $appprefix = $self->{appprefix};
+    $self->render_file( 'config_fcgi',
+        File::Spec->catfile( $dir, "fcgi.$appprefix.yml" ) );
+}
+
+sub _mk_config_job {
+    my $self      = shift;
+    my $dir       = $self->{conf};
+    my $appprefix = $self->{appprefix};
+    $self->render_file( 'config_job',
+        File::Spec->catfile( $dir, "job.$appprefix.yml" ) );
+}
+
+sub _mk_schema_job {
+    my $self      = shift;
+    my $dir       = $self->{sql_schema};
+    my $appprefix = $self->{appprefix};
+    $self->render_file( 'schema_job_sqlite',
+        File::Spec->catfile( $dir, "job-sqlite.sql" ) );
+    $self->render_file( 'schema_job_mysql',
+        File::Spec->catfile( $dir, "job-mysql.sql" ) );
+    $self->render_file( 'schema_job_postgresql',
+        File::Spec->catfile( $dir, "job-postgresql.sql" ) );
 }
 
 sub _mk_readme {
@@ -960,11 +989,24 @@ extends 'Engage::CLI::Command';
 __PACKAGE__->meta->make_immutable;
 
 1;
-__class_job__
-package [% name %]::Job;
+__class_job_daemon__
+package [% name %]::Job::Daemon;
 
 use Moose;
-extends 'Engage::Job';
+extends 'Engage::Job::Daemon';
+
+no Moose;
+
+__PACKAGE__->meta->make_immutable;
+
+1;
+__class_job_client__
+package [% name %]::Job::Client;
+
+use Moose;
+extends 'Engage::Job::Client';
+
+no Moose;
 
 __PACKAGE__->meta->make_immutable;
 
@@ -996,7 +1038,7 @@ catalyst;
 install_script glob('script/*.pl');
 auto_install;
 WriteAll;
-__config__
+__config_fcgi__
 FCGI:
   Service:
     -
@@ -1016,6 +1058,154 @@ FCGI:
       env:
         [% appenv %]_DEBUG: 1
         DBIC_TRACE: 1
+
+__config_job__
+Job:
+  '^product\d{3}':
+    max_workers: 5
+    max_work_per_child: 20
+    databases:
+      - &1
+        dsn: 'dbi:SQLite:__path_to(sqlite/Job.db)__'
+        user:
+        pass:
+  'DEFAULT':
+    max_workers: 3
+    max_work_per_child: 5
+    databases:
+      - *1
+
+__schema_job_sqlite__
+CREATE TABLE funcmap (
+    funcid              INTEGER PRIMARY KEY AUTOINCREMENT,
+    funcname            VARCHAR(255) NOT NULL,
+    UNIQUE(funcname)
+);
+
+CREATE TABLE job (
+    jobid               INTEGER PRIMARY KEY AUTOINCREMENT,
+    funcid              INTEGER UNSIGNED NOT NULL,
+    arg                 MEDIUMBLOB,
+    uniqkey             VARCHAR(255) NULL,
+    insert_time         INTEGER UNSIGNED,
+    run_after           INTEGER UNSIGNED NOT NULL,
+    grabbed_until       INTEGER UNSIGNED NOT NULL,
+    priority            SMALLINT UNSIGNED,
+    coalesce            VARCHAR(255),
+    UNIQUE(funcid,uniqkey)
+);
+
+CREATE TABLE error (
+    error_time          INTEGER UNSIGNED NOT NULL,
+    jobid               INTEGER NOT NULL,
+    message             VARCHAR(255) NOT NULL,
+    funcid              INT UNSIGNED NOT NULL DEFAULT 0
+);
+
+CREATE TABLE exitstatus (
+    jobid               INTEGER PRIMARY KEY NOT NULL,
+    funcid              INT UNSIGNED NOT NULL DEFAULT 0,
+    status              SMALLINT UNSIGNED,
+    completion_time     INTEGER UNSIGNED,
+    delete_after        INTEGER UNSIGNED
+);
+
+__schema_job_mysql__
+CREATE TABLE funcmap (
+    funcid              INT UNSIGNED PRIMARY KEY NOT NULL AUTO_INCREMENT,
+    funcname            VARCHAR(255) NOT NULL,
+    UNIQUE(funcname)
+);
+
+CREATE TABLE job (
+    jobid               BIGINT UNSIGNED PRIMARY KEY NOT NULL AUTO_INCREMENT,
+    funcid              INT UNSIGNED NOT NULL,
+    arg                 MEDIUMBLOB,
+    uniqkey             VARCHAR(255) NULL,
+    insert_time         INTEGER UNSIGNED,
+    run_after           INTEGER UNSIGNED NOT NULL,
+    grabbed_until       INTEGER UNSIGNED NOT NULL,
+    priority            SMALLINT UNSIGNED,
+    coalesce            VARCHAR(255),
+    INDEX (funcid, run_after),
+    UNIQUE(funcid, uniqkey),
+    INDEX (funcid, coalesce)
+);
+
+CREATE TABLE note (
+    jobid               BIGINT UNSIGNED NOT NULL,
+    notekey             VARCHAR(255),
+    value               MEDIUMBLOB,
+    PRIMARY KEY (jobid, notekey)
+);
+
+CREATE TABLE error (
+    error_time          INTEGER UNSIGNED NOT NULL,
+    jobid               BIGINT UNSIGNED NOT NULL,
+    message             VARCHAR(255) NOT NULL,
+    funcid              INT UNSIGNED NOT NULL DEFAULT 0,
+    INDEX (funcid, error_time),
+    INDEX (error_time),
+    INDEX (jobid)
+);
+
+CREATE TABLE exitstatus (
+    jobid               BIGINT UNSIGNED PRIMARY KEY NOT NULL,
+    funcid              INT UNSIGNED NOT NULL DEFAULT 0,
+    status              SMALLINT UNSIGNED,
+    completion_time     INTEGER UNSIGNED,
+    delete_after        INTEGER UNSIGNED,
+    INDEX (funcid),
+    INDEX (delete_after)
+);
+__schema_job_postgresql__
+CREATE TABLE funcmap (
+    funcid SERIAL,
+    funcname            VARCHAR(255) NOT NULL,
+    UNIQUE (funcname)
+);
+
+CREATE TABLE job (
+    jobid               SERIAL,
+    funcid              INT NOT NULL,
+    arg                 BYTEA,
+    uniqkey             VARCHAR(255) NULL,
+    insert_time         INTEGER,
+    run_after           INTEGER NOT NULL,
+    grabbed_until       INTEGER NOT NULL,
+    priority            SMALLINT,
+    coalesce            VARCHAR(255)
+);
+CREATE UNIQUE INDEX job_funcid_uniqkey ON job (funcid, uniqkey);
+CREATE INDEX job_funcid_runafter ON job (funcid, run_after);
+CREATE INDEX job_funcid_coalesce ON job (funcid, coalesce);
+
+CREATE TABLE note (
+    jobid               BIGINT NOT NULL,
+    notekey             VARCHAR(255),
+    value               BYTEA,
+    PRIMARY KEY (jobid, notekey)
+);
+
+CREATE TABLE error (
+    error_time          INTEGER NOT NULL,
+    jobid               BIGINT NOT NULL,
+    message             VARCHAR(255) NOT NULL,
+    funcid              INT NOT NULL DEFAULT 0
+);
+CREATE INDEX error_funcid_errortime ON error (funcid, error_time);
+CREATE INDEX error_time ON error (error_time);
+CREATE INDEX error_jobid ON error (jobid);
+
+CREATE TABLE exitstatus (
+    jobid               BIGINT PRIMARY KEY NOT NULL,
+    funcid              INT NOT NULL DEFAULT 0,
+    status              SMALLINT,
+    completion_time     INTEGER,
+    delete_after        INTEGER
+);
+CREATE INDEX exitstatus_funcid ON exitstatus (funcid);
+CREATE INDEX exitstatus_deleteafter ON exitstatus (delete_after);
 
 __readme__
 Run script/[% appprefix %]_server.pl to test the application.
@@ -1358,9 +1548,9 @@ __job__
 
 use FindBin;
 use lib "$FindBin::Bin/../lib";
-use [% name %]::Job;
+use [% name %]::Job::Daemon;
 
-[% name %]::Job->new->run;
+[% name %]::Job::Daemon->new->run;
 
 __test__
 [% startperl %]
