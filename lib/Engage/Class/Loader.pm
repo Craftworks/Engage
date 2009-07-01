@@ -24,12 +24,29 @@ sub add_loader {
             my $module    = "$app\::$class\::$comp";
             my $instances = $self->loaded_instances;
 
-            if ( !defined $instances->{$module} ) {
+            if ( !Class::MOP::is_class_loaded($module) ) {
                 Class::MOP::load_class($module);
+            }
+
+            if ( !defined $instances->{$module} ) {
                 $instances->{$module} = $module->new;
             }
 
             return $instances->{$module};
+        });
+
+        $self->meta->add_method("new_$method", sub {
+            my $self = shift;
+            my $comp = shift;
+
+            my $app       = $self->appclass;
+            my $module    = "$app\::$class\::$comp";
+
+            if ( !Class::MOP::is_class_loaded($module) ) {
+                Class::MOP::load_class($module);
+            }
+
+            return $module->new(@_);
         });
     }
 };

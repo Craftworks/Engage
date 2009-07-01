@@ -1,6 +1,6 @@
 use strict;
 use warnings;
-use Test::More tests => 4;
+use Test::More tests => 5;
 use FindBin;
 use lib "$FindBin::Bin/lib";
 
@@ -10,7 +10,6 @@ $ENV{'CONFIG_PATH'} = "$FindBin::Bin/conf";
 $ENV{'CONFIG_LOCAL_SUFFIX'} = 'log';
 
 use MyApp::API::Foo;
-use MyApp::DAO::Bar;
 
 #=============================================================================
 # new
@@ -26,4 +25,9 @@ can_ok( $o => 'dao' );
 # return instance
 #=============================================================================
 isa_ok( $o->dao('Bar') => 'MyApp::DAO::Bar', 'valid instance' );
+
+#=============================================================================
+# return different instance
+#=============================================================================
+isnt( $o->new_dao('Bar'), $o->new_dao('Bar'), 'different instance' );
 
