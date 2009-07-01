@@ -18,7 +18,8 @@ sub add_loader {
         (my $method = lc $class) =~ s/::/_/go;
 
         $self->meta->add_method($method, sub {
-            my ( $self, $comp ) = @_;
+            my $self = shift;
+            my $comp = shift;
 
             my $app       = $self->appclass;
             my $module    = "$app\::$class\::$comp";
@@ -29,7 +30,7 @@ sub add_loader {
             }
 
             if ( !defined $instances->{$module} ) {
-                $instances->{$module} = $module->new;
+                $instances->{$module} = $module->new(@_);
             }
 
             return $instances->{$module};
