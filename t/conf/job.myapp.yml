@@ -1,18 +1,16 @@
-Job:
+Job::Client:
+  'DEFAULT':
+    databases:
+      -
+        dsn: 'dbi:SQLite:__path_to(sqlite/Job.db)__'
+        user:
+        pass:
+
+Job::Daemon:
   '^product\d{3}':
     max_workers: 5
     max_work_per_child: 10
-    databases:
-      -
-        dsn: 'dbi:SQLite:__path_to(sqlite/Job.db)__'
-        user:
-        pass:
   'DEFAULT':
     max_workers: 2
     max_work_per_child: 3
-    databases:
-      -
-        dsn: 'dbi:SQLite:__path_to(sqlite/Job.db)__'
-        user:
-        pass:
 

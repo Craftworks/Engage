@@ -3,6 +3,7 @@ package Engage::Job::Worker;
 use Moose;
 use Data::Dumper;
 use Time::HiRes;
+use Text::SimpleTable;
 use namespace::clean -except => 'meta';
 
 with 'Engage::Utils';
