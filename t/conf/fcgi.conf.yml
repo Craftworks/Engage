@@ -1,39 +1,36 @@
-FCGI:
+BASE:
+  'DEFAULT':
     Service:
-        -
-            host: ^prd
-            listen: '/tmp/.s.fcgi.service'
-            nproc: 5
-            pidfile: pid
-            keep_stderr: 1
-            env:
-                CATALYST_DEBUG: 0
-                DBIC_TRACE: 0
-        -
-            host: ^stg
-            listen: '/tmp/.s.fcgi.service'
-            nproc: 5
-            pidfile: pid
-            keep_stderr: 1
-            env:
-                CATALYST_DEBUG: 1
-                DBIC_TRACE: 1
-        -
-            listen: '/tmp/.s.fcgi.service'
-            nproc: 1
-            pidfile: /tmp/pid
-            keep_stderr: 1
-            env:
-                CATALYST_DEBUG: 1
-                DBIC_TRACE: 1
+      listen: '/tmp/.s.fcgi.service'
+      pidfile: 'pid'
+      keep_stderr: 1
     Admin:
-        -
-            host: ^prd
-            listen: '/tmp/.s.fcgi.admin'
-            nproc: 5
-            pidfile: pid
-            keep_stderr: 1
-            env:
-                CATALYST_DEBUG: 1
-                DBIC_TRACE: 0
+      listen: '/tmp/.s.fcgi.admin'
+      pidfile: 'pid'
+      keep_stderr: 0
+
+FCGI::Daemon:
+  '^prd':
+    Service:
+      nproc: 5
+      env:
+        CATALYST_DEBUG: 0
+        DBIC_TRACE: 0
+    Admin:
+      nproc: 5
+      env:
+        CATALYST_DEBUG: 1
+        DBIC_TRACE: 0
+  '^stg':
+    Service:
+      nproc: 5
+      env:
+        CATALYST_DEBUG: 1
+        DBIC_TRACE: 1
+  'DEFAULT':
+    Service:
+      nproc: 1
+      env:
+        CATALYST_DEBUG: 1
+        DBIC_TRACE: 1
 
