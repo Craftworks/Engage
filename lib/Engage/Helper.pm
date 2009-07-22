@@ -1031,9 +1031,11 @@ name '[% dir %]';
 all_from '[% path %]';
 
 requires 'Moose';
+requires 'MooseX::Singleton';
 requires 'MooseX::Types::Path::Class';
 requires 'MooseX::LogDispatch';
 requires 'MooseX::App::Cmd';
+requires 'Scalar::Alias';
 requires 'Config::Any';
 requires 'Hash::Merge';
 requires 'Catalyst::Runtime' => '[% catalyst_version %]';
@@ -1044,6 +1046,7 @@ requires 'FCGI';
 requires 'FCGI::ProcManager';
 requires 'Parallel::Prefork';
 requires 'TheSchwartz';
+requires 'DBIx::Class::Schema::Loader';
 requires 'parent';
 requires 'Config::General'; # This should reflect the config file format you've chosen
                  # See Catalyst::Plugin::ConfigLoader for supported formats
@@ -1734,7 +1737,7 @@ package [% class %];
 [% IF is_engage %]
 use Moose;
 
-extends 'Engage::[% type %]';
+extends '[% app %]::[% type %]';
 
 no Moose;
 
