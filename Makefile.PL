@@ -6,15 +6,18 @@ author   'Craftworks <craftwork at cpan org>';
 license  'perl';
 
 requires 'Moose';
+requires 'MooseX::Singleton';
 requires 'MooseX::LogDispatch';
 requires 'MooseX::Types::Path::Class';
 requires 'MooseX::App::Cmd';
+requires 'Scalar::Alias';
 requires 'Config::Any';
 requires 'Hash::Merge';
 requires 'FCGI';
 requires 'FCGI::ProcManager';
 requires 'Parallel::Prefork';
 requires 'TheSchwartz';
+requires 'DBIx::Class::Schema::Loader';
 
 build_requires 'Test::More';
 build_requires 'Test::File::Contents';
