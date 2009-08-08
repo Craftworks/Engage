@@ -1,5 +1,7 @@
 *.sw?
 blib*
+inc
+MANIFEST
 Makefile
 Makefile.old
 Build
@@ -7,6 +9,5 @@ _build*
 pm_to_blib*
 *.tar.gz
 .lwpcookies
-Engage-*
 cover_db
 META.yml

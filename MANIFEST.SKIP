@@ -1,0 +1,10 @@
+\.git/
+^blib/
+\.gz$
+\.old$
+\.shipit
+cover_db
+^Makefile$
+^MANIFEST\.
+^pm_to_blib
+x\d+.*\.t
