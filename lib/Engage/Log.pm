@@ -1,6 +1,7 @@
 package Engage::Log;
 
 use Moose::Role;
+use Data::Dump 'dump';
 with 'MooseX::LogDispatch';
 
 requires 'env_value';
@@ -31,6 +32,7 @@ $Log::Dispatch::Config::CallerDepth = 0;
 Class::MOP::Class->create(
     'Log::Dispatch' => (
         methods => {
+            'dump'  => sub { shift->log( level => 'debug',   message => dump @_ ) },
             'print' => sub { shift->log( level => 'debug',   message => @_ ) },
             'warn'  => sub { shift->log( level => 'warning', message => @_ ) },
             'fatal' => sub { shift->log( level => 'alert',   message => @_ ) },
