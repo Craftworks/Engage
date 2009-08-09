@@ -1463,6 +1463,7 @@ my $runner = sub {
     # This is require instead of use so that the above environment
     # variables can be set at runtime.
     eval "require $class";
+    die $@ if $@;
 
     $class->run(
         $port, $host,
