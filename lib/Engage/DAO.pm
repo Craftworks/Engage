@@ -10,6 +10,29 @@ has '+config_prefix' => (
     default => 'dao',
 );
 
+has 'data_class' => (
+    is  => 'ro',
+    isa => 'Str',
+    default => sub {
+        my $self = shift;
+        my $app  = $self->appclass;
+        substr ref $self, length "$app\::DAO::";
+    },
+);
+
+has 'data_name' => (
+    is  => 'ro',
+    isa => 'Str',
+    default => sub {
+        my $self = shift;
+        my $name = $self->data_class;
+        $name =~ s/([A-Z])/_\L$1\E/go;
+        $name =~ s/^_//o;
+        $name;
+    },
+    lazy => 1,
+);
+
 __PACKAGE__->add_loader('DOD');
 __PACKAGE__->meta->make_immutable;
 

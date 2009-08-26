@@ -299,9 +299,9 @@ sub mk_component {
       || eval { @{ [ getpwuid($<) ] }[6] }
       || 'A clever guy';
     $self->{base} ||= Path::Class::Dir->new( File::Spec->catdir( $FindBin::Bin, '..' ) )->resolve;
-    if ( $_[0] =~ /^(?:dod|dao|api)$/i ) {
+    if ( $_[0] =~ /^(?:dao|api)$/i ) {
         my $type   = uc shift;
-        my $name   = shift || "Missing name for DOD/DAO/API";
+        my $name   = shift || "Missing name for DAO/API";
         my @args   = @_;
         $self->{long_type} = $type;
         my $appdir = File::Spec->catdir( split /\:\:/, $app );
@@ -364,6 +364,7 @@ sub mk_component {
         eval "require $class";
 
         if ($@) {
+            warn $@;
             $class =~ s/^Engage/Catalyst/;
             eval "require $class";
         }

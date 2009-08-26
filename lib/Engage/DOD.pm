@@ -9,6 +9,19 @@ has '+config_prefix' => (
     default => 'dod',
 );
 
+has 'result_class' => (
+    is  => 'ro',
+    isa => 'Str',
+    default => sub {
+        my $self = shift;
+        my $rs = sprintf '%s::ResultSet', ref $self;
+        if ( !Class::MOP::is_class_loaded($rs) ) {
+            Class::MOP::load_class($rs);
+        }
+        $rs;
+    },
+);
+
 no Moose;
 
 __PACKAGE__->meta->make_immutable;
