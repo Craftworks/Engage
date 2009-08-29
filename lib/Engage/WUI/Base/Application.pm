@@ -5,6 +5,8 @@ use Catalyst::Runtime 5.80;
 use Catalyst;
 use Time::HiRes;
 extends 'Catalyst';
+with 'Engage::Utils';
+with 'Engage::Class::Loader';
 
 our $StartedOn;
 
@@ -26,6 +28,7 @@ override finalize => sub {
 
 no Moose;
 
+__PACKAGE__->add_loader('API');
 __PACKAGE__->meta->make_immutable;
 
 1;
