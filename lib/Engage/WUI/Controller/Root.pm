@@ -1,4 +1,4 @@
-package Engage::WUI::Base::Controller::Root;
+package Engage::WUI::Controller::Root;
 
 =head1 NAME
 

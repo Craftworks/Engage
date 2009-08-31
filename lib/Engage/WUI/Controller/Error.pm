@@ -1,4 +1,4 @@
-package Engage::WUI::Base::Controller::Error;
+package Engage::WUI::Controller::Error;
 
 use Moose;
 use HTTP::Status;
