@@ -11,3 +11,4 @@ pm_to_blib*
 .lwpcookies
 cover_db
 META.yml
+*_CPANTS.txt
