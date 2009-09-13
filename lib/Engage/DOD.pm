@@ -16,7 +16,8 @@ has 'result_class' => (
         my $self = shift;
         my $rs = sprintf '%s::ResultSet', ref $self;
         if ( !Class::MOP::is_class_loaded($rs) ) {
-            Class::MOP::load_class($rs);
+            local $@;
+            eval { Class::MOP::load_class($rs) }
         }
         $rs;
     },
