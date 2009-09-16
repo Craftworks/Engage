@@ -1,6 +1,7 @@
 package Engage::API;
 
 use Moose;
+use Engage::Exception;
 with 'Engage::Utils';
 with 'Engage::Config';
 with 'Engage::Log';

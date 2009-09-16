@@ -1,6 +1,7 @@
 package Engage::DOD;
 
 use Moose;
+use Engage::Exception;
 with 'Engage::Utils';
 with 'Engage::Config';
 with 'Engage::Log';

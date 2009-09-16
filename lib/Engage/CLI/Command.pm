@@ -1,6 +1,7 @@
 package Engage::CLI::Command;
 
 use Moose;
+use Engage::Exception;
 extends 'MooseX::App::Cmd::Command';
 with 'Engage::Utils';
 with 'Engage::Config';
