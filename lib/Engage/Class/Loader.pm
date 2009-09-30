@@ -1,18 +1,16 @@
 package Engage::Class::Loader;
 
 use Moose::Role;
+use Engage::Register;
+use namespace::clean -except => 'meta';
 
 requires 'appclass';
-
-has 'loaded_instances' => (
-    is  => 'ro',
-    isa => 'HashRef[Object]',
-    default => sub { {} },
-);
 
 sub add_loader {
     my $self = shift;
     my @class_for_loading = @_;
+
+    my $register = Engage::Register->instance;
 
     for my $class (@class_for_loading) {
         (my $method = lc $class) =~ s/::/_/go;
@@ -21,27 +19,24 @@ sub add_loader {
             my $self = shift;
             my $comp = shift;
 
-            my $app       = $self->appclass;
-            my $module    = "$app\::$class\::$comp";
-            my $instances = $self->loaded_instances;
+            my $app      = $self->appclass;
+            my $module   = "$app\::$class\::$comp";
+            my $instance = $register->get($module);
 
-            if ( !Class::MOP::is_class_loaded($module) ) {
+            unless ( $instance ) {
                 Class::MOP::load_class($module);
+                $instance = $register->set($module, $module->new(@_));
             }
 
-            if ( !defined $instances->{$module} ) {
-                $instances->{$module} = $module->new(@_);
-            }
-
-            return $instances->{$module};
+            return $instance;
         });
 
         $self->meta->add_method("new_$method", sub {
             my $self = shift;
             my $comp = shift;
 
-            my $app       = $self->appclass;
-            my $module    = "$app\::$class\::$comp";
+            my $app      = $self->appclass;
+            my $module   = "$app\::$class\::$comp";
 
             if ( !Class::MOP::is_class_loaded($module) ) {
                 Class::MOP::load_class($module);
@@ -51,8 +46,6 @@ sub add_loader {
         });
     }
 };
-
-no Moose::Role;
 
 1;
 
