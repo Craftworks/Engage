@@ -27,6 +27,7 @@ has 'data_name' => (
     default => sub {
         my $self = shift;
         my $name = $self->data_class;
+        $name = lc $name if ( $name =~ /^[A-Z]+$/ );
         $name =~ s/([A-Z])/_\L$1\E/go;
         $name =~ s/^_//o;
         $name;
