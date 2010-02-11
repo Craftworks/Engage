@@ -72,9 +72,13 @@ C<default_view> key in the configuration.
 
 sub end :Private {
     my ( $self, $c ) = @_;
-    $c->log->debug(sprintf 'Status %d %s', $c->res->status, HTTP::Status::status_message( $c->res->status ) );
-    return 1 if $c->res->status =~ /^3\d\d$/o;
-    return 1 if $c->res->body;
+    if (@{ $c->error }) {
+        $c->forward('/error/handle_error');
+    }
+    else {
+        return 1 if $c->res->status =~ /^3\d\d$/o;
+        return 1 if $c->res->body;
+    }
     $c->forward('render');
 }
 

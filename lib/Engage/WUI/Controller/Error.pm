@@ -7,6 +7,15 @@ BEGIN { extends 'Catalyst::Controller' }
 
 sub handle_exception :Private {
     my ( $self, $c ) = @_;
+    if ( $c->engine->env->{'SEND_FATAL'} ) {
+        $c->forward('send_fatal');
+    }
+}
+
+sub handle_error :Private {
+    my ( $self, $c ) = @_;
+    $c->res->status(500);
+    $c->stash->{'template'} = $c->config->{'http_error_template'};
 }
 
 sub not_found :Private {
@@ -14,6 +23,23 @@ sub not_found :Private {
     $c->res->body( HTTP::Status::status_message( RC_NOT_FOUND ) );
     $c->res->status( RC_NOT_FOUND );
     $c->detach;
+}
+
+sub send_fatal : Private {
+    my ( $self, $c ) = @_;
+    eval {
+        $c->api('Email::Sender')->sendmail(
+            'email' => $c->config->{'send_fatal'}{'email'},
+            'to'    => $c->config->{'send_fatal'}{'to'},
+            'vars'  => +{
+                'error'  => [ map "$_", @{ $c->error } ],
+                'params' => YAML::Syck::Dump($c->req->params),
+                'env'    => $c->engine->env,
+                'user'   => $c->user->obj,
+            },
+        );
+    };
+    $c->log->debug("$@") if $@;
 }
 
 __PACKAGE__->meta->make_immutable;
