@@ -1,37 +1,38 @@
-#!/usr/bin/perl -w
+#!/usr/bin/env perl
+
+eval 'exec /usr/bin/perl -w -S $0 ${1+"$@"}'
+    if 0; # not running under some shell
 
 use strict;
+use warnings;
 use Getopt::Long;
 use Pod::Usage;
 use Engage::Helper;
+use Data::Dumper;
 
-my $force    = 0;
-my $help     = 0;
-my $makefile = 0;
-my $scripts  = 0;
-my $short    = 0;
-
-GetOptions(
-    'help|?'      => \$help,
-    'force|nonew' => \$force,
-    'makefile'    => \$makefile,
-    'scripts'     => \$scripts,
-    'short'       => \$short
+my %opt = (
+    'help'     => 0,
+    'force'    => 0,
+    'makefile' => 0,
+    'scripts'  => 0,
 );
 
-pod2usage(1) if ( $help || !$ARGV[0] );
-
-my $helper = Engage::Helper->new(
-    {
-        '.newfiles' => !$force,
-        'makefile'  => $makefile,
-        'scripts'   => $scripts,
-        'short'     => $short,
-    }
+GetOptions( \%opt,
+    'help|?',
+    'force|nonew',
+    'makefile!',
+    'scripts!'
 );
-pod2usage(1) unless $helper->mk_app( $ARGV[0] );
+
+my $name = shift;
+
+pod2usage(1) if ( $opt{'help'} || !$name );
+
+STDOUT->autoflush;
+Engage::Helper->new( name => $name, %opt )->mk_stuff or pod2usage(1);
 
 1;
+
 __END__
 
 =head1 NAME
@@ -48,9 +49,6 @@ upgrade the skeleton of your old application.
  Options:
    -force      don't create a .new file where a file to be created exists
    -help       display this help and exit
-   -makefile   only update Makefile.PL
-   -scripts    only update helper scripts
-   -short      use short names, M/V/C instead of Model/View/Controller.
 
  application-name must be a valid Perl module name and can include "::", 
  which will be converted to '-' in the project name.
@@ -61,8 +59,7 @@ upgrade the skeleton of your old application.
     engage.pl MyApp
 
  To upgrade your app to a new version of Engage:
-    engage.pl -force -scripts MyApp
-
+    engage.pl -force MyApp
 
 =head1 DESCRIPTION
 
@@ -166,4 +163,3 @@ This library is free software, you can redistribute it and/or modify it under
 the same terms as Perl itself.
 
 =cut
-
