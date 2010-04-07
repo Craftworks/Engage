@@ -4,6 +4,7 @@ use Moose;
 use Catalyst::Runtime 5.80;
 use Catalyst;
 use Time::HiRes;
+use HTTP::Status;
 extends 'Catalyst';
 with 'Engage::Utils';
 with 'Engage::Class::Loader';
@@ -20,9 +21,15 @@ after 'setup_finalize' => sub {
     $c->log->_flush if $c->log->can('_flush');
 };
 
-after 'finalize_error' => sub {
-    my $c = shift;
+around 'finalize_error' => sub {
+    my ( $next, $self, @args ) = @_;
+    my $c = $self;
     $c->forward('/error/handle_exception');
+    if ( not $c->engine->env->{'NO_STACK_TRACE'} ) {
+        $self->$next(@args);
+    }
+    $c->log->debug(sprintf 'Status %d %s',
+        $c->res->status, HTTP::Status::status_message($c->res->status));
 };
 
 no Moose;

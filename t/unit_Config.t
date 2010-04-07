@@ -105,6 +105,7 @@ is_deeply( $class->new(
 # config_base
 #=============================================================================
 {
+    local $ENV{'HOSTNAME'} = 'dev';
     my $config = MyApp::Job::Worker::Foo->new(
         config_prefix => 'job',
         config_switch => 1,
