@@ -2,6 +2,8 @@ package Engage::Utils;
 
 use Moose::Role;
 use MooseX::Types::Path::Class;
+use Digest::MD5;
+use Time::HiRes;
 use Cwd;
 
 has 'home' => (
@@ -65,17 +67,21 @@ sub _build_term_width {
 sub appclass {
     my $self  = shift;
     my $class = ref $self || $self;
-    if ( $class =~ /^(.+?)::(?:DOD|DAO|API|CLI|WUI|Job|FCGI)(?:::)?.*$/o ) {
+    if ( $class =~ /^(.+?)::(?:DOD|DAO|API|CLI|WUI|SRV|Job|FCGI)(?:::)?.*$/o ) {
         return $1;
     }
 }
 
-sub appprefix {
-    my $self  = shift;
-    my $class = ref $self || $self;
+sub class2prefix {
+    my $class = ( (@_ == 1) ? (blessed $_[0] || $_[0]) : $_[1] ) || '';
     $class =~ s/::/_/go;
-    $class = lc $class;
-    return $class;
+    return lc $class;
+}
+
+sub class2env {
+    my $class = ( (@_ == 1) ? (blessed $_[0] || $_[0]) : $_[1] ) || '';
+    $class =~ s/::/_/go;
+    return uc $class;
 }
 
 sub env_value {
@@ -99,6 +105,10 @@ sub path_to {
     else {
         return Path::Class::File->new( $self->home, @path );
     }
+}
+
+sub random_token {
+    Digest::MD5::md5_hex( Time::HiRes::time . rand );
 }
 
 no Moose::Role;
